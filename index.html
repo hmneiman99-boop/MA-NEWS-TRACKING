@@ -346,6 +346,132 @@ header {
   font-size:10px; color:var(--muted); text-align:center; letter-spacing:0.5px;
 }
 
+/* THEMES TAB */
+.tab-btn.themes-tab.active { color:var(--accent2); border-bottom-color:var(--accent2); }
+
+.themes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.theme-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-panel::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+}
+
+.theme-panel.cloud-panel::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.theme-panel.sectors-panel::before { background: linear-gradient(90deg, var(--accent2), #5ab87e); }
+.theme-panel.activity-panel::before { background: linear-gradient(90deg, #b090e0, var(--accent)); }
+.theme-panel.reporters-panel::before { background: linear-gradient(90deg, #ffaa55, #e07a7a); }
+
+.theme-panel-head {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.theme-panel-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted); font-weight: 500;
+}
+
+.theme-panel-body { padding: 20px; min-height: 200px; }
+
+/* WORD CLOUD */
+.word-cloud {
+  display: flex; flex-wrap: wrap;
+  gap: 8px; align-items: center;
+  padding: 10px 0;
+}
+
+.cloud-word {
+  cursor: default;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: opacity 0.2s;
+  letter-spacing: -0.3px;
+}
+
+.cloud-word:hover { opacity: 0.7; }
+
+/* SECTOR BARS */
+.sector-bar-row {
+  display: flex; align-items: center;
+  gap: 10px; margin-bottom: 10px;
+}
+.sector-bar-row:last-child { margin-bottom: 0; }
+.sector-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+  width: 120px; flex-shrink: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sector-bar-wrap { flex: 1; height: 4px; background: var(--border2); }
+.sector-bar-fill { height: 100%; transition: width 0.6s ease; }
+.sector-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  width: 24px; text-align: right; flex-shrink: 0;
+}
+
+/* ACTIVITY TIMELINE */
+.activity-chart { width: 100%; }
+.activity-bars {
+  display: flex; align-items: flex-end;
+  gap: 4px; height: 100px; margin-bottom: 8px;
+}
+.activity-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.activity-bar {
+  width: 100%; background: var(--accent);
+  transition: height 0.5s ease;
+  min-height: 2px;
+}
+.activity-bar.today { background: var(--accent2); }
+.activity-day {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  text-align: center;
+}
+
+/* REPORTER ACTIVITY */
+.reporter-activity-row {
+  display: flex; align-items: center;
+  gap: 10px; margin-bottom: 9px;
+}
+.reporter-activity-row:last-child { margin-bottom: 0; }
+.reporter-activity-name {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px; color: var(--text-dim);
+  width: 140px; flex-shrink: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.reporter-activity-bar-wrap { flex: 1; height: 4px; background: var(--border2); }
+.reporter-activity-bar-fill { height: 100%; }
+.reporter-activity-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  width: 20px; text-align: right; flex-shrink: 0;
+}
+
+.themes-empty {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  text-align: center; padding: 40px 0;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px) { .themes-grid { grid-template-columns: 1fr; } }
+
 /* RESPONSIVE */
 @media(max-width:1300px) { .briefing-wrap{grid-template-columns:1fr} .stats-card{display:none} .latest-strip{grid-template-columns:repeat(3,1fr)} }
 @media(max-width:900px) { header{padding:14px 20px;flex-wrap:wrap;gap:10px} .main{padding:16px 20px 60px} .reporters-grid{grid-template-columns:1fr} .latest-strip{grid-template-columns:repeat(2,1fr)} }
@@ -372,6 +498,7 @@ header {
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('news',this)">📰 News Feed</button>
   <button class="tab-btn dealdesk-tab" onclick="switchTab('dealdesk',this)">✏ Deal Desk</button>
+  <button class="tab-btn themes-tab" onclick="switchTab('themes',this)">◉ Themes</button>
 </div>
 
 <!-- NEWS TAB -->
@@ -469,6 +596,48 @@ header {
   </div>
 </div>
 </div><!-- /tab-dealdesk -->
+
+<!-- THEMES TAB -->
+<div class="tab-panel" id="tab-themes">
+<div class="main">
+  <div class="section-header">
+    <span class="section-label" style="color:var(--accent2)">Weekly Themes</span>
+    <div class="section-line"></div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);white-space:nowrap">Generated from loaded headlines</span>
+  </div>
+  <div class="themes-grid">
+    <div class="theme-panel cloud-panel" style="grid-column:1/-1">
+      <div class="theme-panel-head">
+        <span class="theme-panel-label">◉ Keyword Cloud</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">size = frequency this week</span>
+      </div>
+      <div class="theme-panel-body">
+        <div class="word-cloud" id="word-cloud"><div class="themes-empty">Load the news feed first, then come back here.</div></div>
+      </div>
+    </div>
+    <div class="theme-panel sectors-panel">
+      <div class="theme-panel-head">
+        <span class="theme-panel-label">◈ Sector Coverage</span>
+      </div>
+      <div class="theme-panel-body" id="sector-bars"><div class="themes-empty">Loading…</div></div>
+    </div>
+    <div class="theme-panel reporters-panel">
+      <div class="theme-panel-head">
+        <span class="theme-panel-label">◈ Reporter Activity</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">articles this week</span>
+      </div>
+      <div class="theme-panel-body" id="reporter-activity"><div class="themes-empty">Loading…</div></div>
+    </div>
+    <div class="theme-panel activity-panel" style="grid-column:1/-1">
+      <div class="theme-panel-head">
+        <span class="theme-panel-label">◈ Publishing Activity</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">articles per day · last 7 days</span>
+      </div>
+      <div class="theme-panel-body" id="activity-timeline"><div class="themes-empty">Loading…</div></div>
+    </div>
+  </div>
+</div>
+</div><!-- /tab-themes -->
 
 <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
@@ -878,18 +1047,220 @@ function refreshAll() {
   startCountdown();
 }
 
+// ── THEMES ENGINE ───────────────────────────────────────────────
+const STOP_WORDS = new Set([
+  'the','a','an','and','or','but','in','on','at','to','for','of','with',
+  'by','from','as','is','was','are','were','be','been','has','have','had',
+  'its','it','this','that','these','those','will','would','could','should',
+  'may','might','can','do','does','did','not','no','nor','so','yet','both',
+  'either','each','few','more','most','other','some','such','than','then',
+  'too','very','just','about','after','before','between','into','through',
+  'during','over','under','again','further','once','says','said','say',
+  'new','report','plans','plan','sources','source','deal','deals','company',
+  'firms','firm','inc','corp','co','ltd','llc','group','holdings','us','uk',
+  'amid','amid','per','top','big','set','hit','get','put','how','why','when',
+  'what','who','which','their','they','them','his','her','our','your','my',
+  'we','he','she','i','you','up','out','off','all','any','been','also',
+  'than','now','he','she','we','use','used','take','make','made','two',
+  'one','three','four','five','six','seven','eight','nine','ten','first',
+  'second','third','last','next','long','high','low','large','small',
+]);
+
+const SECTOR_KEYWORDS = {
+  'Healthcare / Pharma': ['pharma','drug','biotech','health','medical','hospital','therapeutics','biologic','FDA','clinical','oncology','vaccine','genomic','life sciences'],
+  'Technology': ['tech','software','AI','cloud','data','digital','cyber','semiconductor','chip','platform','SaaS','fintech','startup'],
+  'Energy': ['energy','oil','gas','power','renewable','solar','wind','utility','pipeline','LNG','petroleum','coal','nuclear'],
+  'Financial Services': ['bank','insurance','asset management','wealth','credit','lending','payments','financial','capital markets','broker'],
+  'Media & Telecom': ['media','telecom','streaming','broadcast','cable','wireless','content','publishing','entertainment'],
+  'Industrials': ['aerospace','defense','manufacturing','logistics','transport','infrastructure','construction','engineering'],
+  'Consumer / Retail': ['retail','consumer','brand','restaurant','food','beverage','apparel','e-commerce','luxury'],
+  'Real Estate': ['real estate','REIT','property','commercial','residential','housing'],
+};
+
+function buildWordCloud() {
+  if (!allArticles.length) return;
+
+  // Count word frequencies
+  const freq = {};
+  allArticles.forEach(a => {
+    const words = (a.title || '').toLowerCase()
+      .replace(/[^a-z\s'-]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !STOP_WORDS.has(w));
+    words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+  });
+
+  // Sort by frequency, take top 60
+  const sorted = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 60);
+
+  if (!sorted.length) return;
+
+  const maxFreq = sorted[0][1];
+  const minFreq = sorted[sorted.length - 1][1];
+
+  // Color categories
+  const dealWords = new Set(['acquisition','merger','takeover','buyout','bid','offer','acquire','acquired','acquires','transaction','purchase','divest','spinoff','ipo','lbo','leverage','private','equity']);
+  const activismWords = new Set(['activist','proxy','stake','shareholder','campaign','dissident','board','pressure','letter','vote','engagement','fund','hedge']);
+
+  const cloud = document.getElementById('word-cloud');
+  if (!cloud) return;
+
+  cloud.innerHTML = sorted.map(([word, count]) => {
+    const ratio = minFreq === maxFreq ? 0.5 : (count - minFreq) / (maxFreq - minFreq);
+    const size = Math.round(11 + ratio * 28); // 11px to 39px
+    const opacity = 0.5 + ratio * 0.5;
+
+    let color;
+    if (dealWords.has(word))       color = 'var(--accent2)';
+    else if (activismWords.has(word)) color = 'var(--activism-color)';
+    else if (ratio > 0.7)          color = 'var(--accent)';
+    else if (ratio > 0.4)          color = 'var(--text)';
+    else                            color = 'var(--text-dim)';
+
+    return `<span class="cloud-word" style="font-size:${size}px;color:${color};opacity:${opacity}" title="${count} mention${count!==1?'s':''}">${word}</span>`;
+  }).join('');
+}
+
+function buildSectorBars() {
+  if (!allArticles.length) return;
+  const el = document.getElementById('sector-bars');
+  if (!el) return;
+
+  const counts = {};
+  Object.keys(SECTOR_KEYWORDS).forEach(s => counts[s] = 0);
+
+  allArticles.forEach(a => {
+    const t = (a.title || '').toLowerCase();
+    Object.entries(SECTOR_KEYWORDS).forEach(([sector, kws]) => {
+      if (kws.some(k => t.includes(k.toLowerCase()))) counts[sector]++;
+    });
+  });
+
+  const sorted = Object.entries(counts)
+    .filter(([,n]) => n > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="themes-empty">Not enough sector-specific headlines yet.</div>';
+    return;
+  }
+
+  const max = sorted[0][1];
+  const colors = ['var(--accent)','var(--accent2)','#5ab87e','#b090e0','#ffaa55','#e07a7a','var(--accent)','var(--accent2)'];
+
+  el.innerHTML = sorted.map(([sector, count], i) => `
+    <div class="sector-bar-row">
+      <div class="sector-name">${sector}</div>
+      <div class="sector-bar-wrap">
+        <div class="sector-bar-fill" style="width:${(count/max*100).toFixed(1)}%;background:${colors[i%colors.length]}"></div>
+      </div>
+      <div class="sector-count">${count}</div>
+    </div>`).join('');
+}
+
+function buildReporterActivity() {
+  if (!allArticles.length) return;
+  const el = document.getElementById('reporter-activity');
+  if (!el) return;
+
+  const counts = {};
+  allArticles.forEach(a => {
+    if (a.reporter) counts[a.reporter] = (counts[a.reporter] || 0) + 1;
+  });
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!sorted.length) return;
+
+  const max = sorted[0][1];
+  const outletColor = {
+    Axios:'#e07a7a', Bloomberg:'var(--accent2)', NYT:'#c8c8be',
+    Reuters:'#ffaa55', WSJ:'var(--accent)', Semafor:'#b090e0', FT:'#ffc364'
+  };
+
+  // Get reporter->outlet map
+  const repOutlet = {};
+  REPORTERS.forEach(r => repOutlet[r.name] = r.outlet);
+
+  el.innerHTML = sorted.map(([name, count]) => {
+    const outlet = repOutlet[name] || 'WSJ';
+    const color = outletColor[outlet] || 'var(--accent)';
+    return `<div class="reporter-activity-row">
+      <div class="reporter-activity-name">${name}</div>
+      <div class="reporter-activity-bar-wrap">
+        <div class="reporter-activity-bar-fill" style="width:${(count/max*100).toFixed(1)}%;background:${color}"></div>
+      </div>
+      <div class="reporter-activity-count">${count}</div>
+    </div>`;
+  }).join('');
+}
+
+function buildActivityTimeline() {
+  const el = document.getElementById('activity-timeline');
+  if (!el || !allArticles.length) return;
+
+  // Build last 7 days buckets
+  const days = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    days.push({
+      label: i === 0 ? 'Today' : d.toLocaleDateString('en-US',{weekday:'short'}),
+      date: d.toDateString(),
+      count: 0,
+      isToday: i === 0
+    });
+  }
+
+  allArticles.forEach(a => {
+    if (!a.pubDate) return;
+    const d = new Date(a.pubDate);
+    if (isNaN(d)) return;
+    const ds = d.toDateString();
+    const bucket = days.find(b => b.date === ds);
+    if (bucket) bucket.count++;
+  });
+
+  const max = Math.max(...days.map(d => d.count), 1);
+
+  el.innerHTML = `
+    <div class="activity-chart">
+      <div class="activity-bars">
+        ${days.map(d => `
+          <div class="activity-bar-col">
+            <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+              <div class="activity-bar${d.isToday?' today':''}"
+                style="height:${Math.max((d.count/max*90),d.count>0?4:2)}px"
+                title="${d.count} article${d.count!==1?'s':''}"></div>
+            </div>
+            <div class="activity-day">${d.label}</div>
+            <div class="activity-day" style="color:var(--accent2)">${d.count||'—'}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function buildThemes() {
+  buildWordCloud();
+  buildSectorBars();
+  buildReporterActivity();
+  buildActivityTimeline();
+}
+
 // ── TAB SWITCHING ───────────────────────────────────────────────
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'dealdesk') renderNotes();
+  if (tab === 'themes') buildThemes();
+  // Firebase listener keeps notes live automatically
 }
 
-// ── DEAL DESK NOTES ─────────────────────────────────────────────
-const NOTES_KEY = 'dealdesk-notes';
-const MAX_NOTES = 50;
+// ── DEAL DESK NOTES (Firebase) ──────────────────────────────────
+// Firebase is loaded via CDN script tags at bottom of body
 
 function noteTimeAgo(ts) {
   const diff = Math.floor((Date.now() - ts) / 1000);
@@ -901,27 +1272,22 @@ function noteTimeAgo(ts) {
          d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
-async function loadNotes() {
-  try {
-    const result = await window.storage.get(NOTES_KEY, true);
-    return result ? JSON.parse(result.value) : [];
-  } catch(e) { return []; }
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function saveNotes(notes) {
-  try {
-    await window.storage.set(NOTES_KEY, JSON.stringify(notes), true);
-  } catch(e) {}
-}
-
-async function renderNotes() {
-  const notes = await loadNotes();
+function renderNotes(notes) {
   const container = document.getElementById('dealdesk-notes');
-  if (!notes.length) {
+  if (!container) return;
+  if (!notes || !Object.keys(notes).length) {
     container.innerHTML = '<div class="dealdesk-empty">No notes yet — be the first to add a thought.</div>';
     return;
   }
-  container.innerHTML = notes.slice().reverse().map(n => `
+  // Convert Firebase object to sorted array (newest first)
+  const arr = Object.entries(notes)
+    .map(([id, n]) => ({...n, id}))
+    .sort((a, b) => b.ts - a.ts);
+  container.innerHTML = arr.map(n => `
     <div class="dealdesk-note">
       <div class="note-author">${escHtml(n.author||'Anonymous')}</div>
       <div class="note-body">${escHtml(n.text)}</div>
@@ -932,8 +1298,23 @@ async function renderNotes() {
     </div>`).join('');
 }
 
-function escHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function initFirebase() {
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhuIrxGsQkIdpIgjmAX9QEJaFgAU06_08",
+    authDomain: "ma-news-tracker.firebaseapp.com",
+    databaseURL: "https://ma-news-tracker-default-rtdb.firebaseio.com",
+    projectId: "ma-news-tracker",
+    storageBucket: "ma-news-tracker.firebasestorage.app",
+    messagingSenderId: "111740960054",
+    appId: "1:111740960054:web:578179c2f6f6242a0a8797"
+  };
+  firebase.initializeApp(firebaseConfig);
+  window.db = firebase.database();
+
+  // Live listener — updates in real time for all users
+  window.db.ref('notes').on('value', snap => {
+    renderNotes(snap.val());
+  });
 }
 
 async function postNote() {
@@ -943,21 +1324,21 @@ async function postNote() {
   const text   = textEl.value.trim();
   if (!text) { textEl.focus(); return; }
 
-  const notes = await loadNotes();
-  notes.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), author, text, ts: Date.now() });
-  if (notes.length > MAX_NOTES) notes.splice(0, notes.length - MAX_NOTES);
-  await saveNotes(notes);
-  textEl.value = '';
-  // Remember author name in localStorage for convenience
-  try { localStorage.setItem('dealdesk-author', author); } catch(e) {}
-  await renderNotes();
+  try {
+    await window.db.ref('notes').push({
+      author, text, ts: Date.now()
+    });
+    textEl.value = '';
+    try { localStorage.setItem('dealdesk-author', author); } catch(e) {}
+  } catch(e) {
+    alert('Could not save note — check your connection.');
+  }
 }
 
 async function deleteNote(id) {
-  const notes = await loadNotes();
-  const updated = notes.filter(n => n.id !== id);
-  await saveNotes(updated);
-  await renderNotes();
+  try {
+    await window.db.ref('notes/' + id).remove();
+  } catch(e) {}
 }
 
 function noteKeydown(e) {
@@ -976,10 +1357,13 @@ try {
   if (saved) document.getElementById('note-author').value = saved;
 } catch(e) {}
 
-// Load notes
-renderNotes();
-// Refresh notes every 30 seconds to pick up teammates' posts
-setInterval(renderNotes, 30000);
+// Firebase handles live note updates via its own listener (initFirebase)
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  // Init Firebase after SDKs are loaded
+  initFirebase();
 </script>
 </body>
 </html>

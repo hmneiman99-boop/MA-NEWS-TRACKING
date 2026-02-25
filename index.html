@@ -565,12 +565,26 @@ function fullTimestamp(str) {
 
 function parseRSS(xml) {
   const doc = new DOMParser().parseFromString(xml,'text/xml');
-  return Array.from(doc.querySelectorAll('item')).slice(0,6).map(item => ({
-    title:   item.querySelector('title')?.textContent?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
-    link:    item.querySelector('link')?.textContent || '#',
-    pubDate: item.querySelector('pubDate')?.textContent || '',
-    source:  item.querySelector('source')?.textContent || ''
-  }));
+  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - SEVEN_DAYS;
+  return Array.from(doc.querySelectorAll('item'))
+    .map(item => ({
+      title:   item.querySelector('title')?.textContent?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
+      link:    item.querySelector('link')?.textContent || '#',
+      pubDate: item.querySelector('pubDate')?.textContent || '',
+      source:  item.querySelector('source')?.textContent || ''
+    }))
+    .filter(a => {
+      if (!a.pubDate) return true; // keep if no date
+      const d = new Date(a.pubDate);
+      return isNaN(d) || d.getTime() > cutoff;
+    })
+    .sort((a, b) => {
+      const da = a.pubDate ? new Date(a.pubDate) : new Date(0);
+      const db = b.pubDate ? new Date(b.pubDate) : new Date(0);
+      return db - da; // newest first
+    })
+    .slice(0, 6);
 }
 
 async function tryFetch(query) {
@@ -583,10 +597,22 @@ async function tryFetch(query) {
   try {
     const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
     const d = await r.json();
-    if (d.status==='ok' && d.items?.length) return d.items.slice(0,6).map(i=>({
-      title:   i.title?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
-      link:    i.link || '#', pubDate:i.pubDate || '', source:i.source_id || ''
-    }));
+    if (d.status==='ok' && d.items?.length) {
+      const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+      const cutoff = Date.now() - SEVEN_DAYS;
+      return d.items
+        .map(i => ({
+          title:   i.title?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
+          link:    i.link || '#', pubDate: i.pubDate || '', source: i.source_id || ''
+        }))
+        .filter(a => {
+          if (!a.pubDate) return true;
+          const d2 = new Date(a.pubDate);
+          return isNaN(d2) || d2.getTime() > cutoff;
+        })
+        .sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0))
+        .slice(0, 6);
+    }
   } catch(e) {}
   return [];
 }

@@ -5,1570 +5,405 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M&A News Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #080808;
-  --surface: #101010;
-  --surface2: #161616;
-  --border: #1e1e1e;
-  --border2: #2a2a2a;
-  --accent: #c8a96e;
-  --accent-dim: rgba(200,169,110,0.1);
-  --accent2: #6eb8c8;
-  --text: #e8e4dd;
-  --text-dim: #999;
-  --muted: #555;
-  --red: #e05a5a;
-  --green: #5ab87e;
-  --deal-color: #6eb8c8;
-  --activism-color: #c87e6e;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-weight:300; min-height:100vh; }
-
-/* HEADER */
-header {
-  border-bottom:1px solid var(--border);
-  padding:18px 40px;
-  display:flex; align-items:center; justify-content:space-between;
-  position:sticky; top:0;
-  background:rgba(8,8,8,0.97);
-  backdrop-filter:blur(8px);
-  z-index:100;
-}
-.header-left { display:flex; align-items:center; gap:16px; }
-.header-left h1 {
-  font-family:'Playfair Display',serif;
-  font-size:20px; font-weight:900;
-  color:var(--accent); letter-spacing:0.3px; white-space:nowrap;
-}
-.header-divider { width:1px; height:18px; background:var(--border2); }
-.header-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
-.header-right { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-.header-stat { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); }
-.header-stat span { color:var(--accent2); font-weight:500; }
-#countdown { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); }
-#refresh-btn {
-  background:none; border:1px solid var(--border2); color:var(--text-dim);
-  font-family:'IBM Plex Mono',monospace; font-size:10px;
-  padding:6px 14px; cursor:pointer; letter-spacing:1px; text-transform:uppercase; transition:all 0.2s;
-}
-#refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
-
-/* TABS */
-.tab-bar {
-  border-bottom:1px solid var(--border);
-  padding:0 40px;
-  display:flex; align-items:center; gap:0;
-  background:rgba(8,8,8,0.97);
-  position:sticky; top:61px; z-index:99;
-}
-.tab-btn {
-  background:none; border:none; border-bottom:2px solid transparent;
-  color:var(--muted); font-family:'IBM Plex Mono',monospace;
-  font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
-  padding:12px 20px; cursor:pointer; transition:all 0.2s;
-  margin-bottom:-1px;
-}
-.tab-btn:hover { color:var(--text-dim); }
-.tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
-.tab-btn.dealdesk-tab.active { color:#b090e0; border-bottom-color:#b090e0; }
-.tab-panel { display:none; }
-.tab-panel.active { display:block; }
-
-/* PROGRESS */
-.progress-bar { height:2px; background:var(--border); position:fixed; bottom:0; left:0; right:0; z-index:200; }
-.progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 1s linear; width:100%; }
-
-/* MAIN */
-.main { padding:24px 40px 60px; max-width:1700px; margin:0 auto; }
-
-/* SEARCH BAR */
-.search-wrap {
-  margin-bottom:20px;
-  display:flex; gap:10px; align-items:center;
-}
-.search-input-wrap {
-  position:relative; flex:1; max-width:420px;
-}
-.search-input {
-  width:100%;
-  background:var(--surface);
-  border:1px solid var(--border2);
-  color:var(--text);
-  font-family:'IBM Plex Mono',monospace;
-  font-size:11px;
-  padding:8px 36px 8px 14px;
-  outline:none;
-  letter-spacing:0.3px;
-  transition:border-color 0.2s;
-}
-.search-input::placeholder { color:var(--muted); }
-.search-input:focus { border-color:var(--accent); }
-.search-clear {
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  background:none; border:none; color:var(--muted); cursor:pointer;
-  font-size:14px; line-height:1; display:none;
-}
-.search-clear.visible { display:block; }
-.search-count {
-  font-family:'IBM Plex Mono',monospace;
-  font-size:10px; color:var(--accent2);
-  letter-spacing:0.5px;
-  min-width:80px;
-}
-
-/* BRIEFING */
-.briefing-wrap { display:grid; grid-template-columns:1fr 270px; gap:14px; margin-bottom:24px; }
-.briefing-card {
-  background:var(--surface); border:1px solid var(--border);
-  position:relative; overflow:hidden;
-}
-.briefing-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
-}
-.briefing-head {
-  padding:12px 20px 10px; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between;
-}
-.briefing-label {
-  display:flex; align-items:center; gap:8px;
-  font-family:'IBM Plex Mono',monospace; font-size:9px;
-  letter-spacing:2px; text-transform:uppercase; color:var(--accent); font-weight:500;
-}
-.live-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:livepulse 2s infinite; }
-@keyframes livepulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
-.briefing-time { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); }
-.briefing-text {
-  padding:16px 20px; font-size:13px; line-height:1.85; color:var(--text); min-height:64px;
-}
-.briefing-text.loading { color:var(--muted); font-family:'IBM Plex Mono',monospace; font-size:11px; }
-
-/* STATS CARD */
-.stats-card { background:var(--surface); border:1px solid var(--border); display:flex; flex-direction:column; }
-.stats-head { padding:12px 16px 10px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
-.stat-row { padding:9px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-.stat-row:last-child { border-bottom:none; }
-.stat-label { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); }
-.stat-value { font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:var(--accent); }
-
-/* LATEST STRIP */
-.section-header { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-.section-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
-.section-line { flex:1; height:1px; background:var(--border); }
-.latest-strip { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:24px; }
-.latest-card { background:var(--surface); border:1px solid var(--border); padding:12px 14px; transition:border-color 0.2s,background 0.2s; }
-.latest-card:hover { border-color:var(--border2); background:var(--surface2); }
-.latest-card a { text-decoration:none; color:inherit; display:block; }
-.latest-badge {
-  font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:1px;
-  text-transform:uppercase; padding:2px 6px; margin-bottom:7px; display:inline-block;
-}
-.latest-title { font-size:11.5px; line-height:1.5; color:var(--text); margin-bottom:7px;
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.latest-card:hover .latest-title { color:var(--accent); }
-.latest-meta { display:flex; justify-content:space-between; align-items:center; }
-.latest-reporter { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); }
-.latest-time { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); }
-
-/* FILTER BAR */
-.filter-bar { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
-.filter-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; margin-right:4px; }
-.filter-sep { width:1px; height:16px; background:var(--border2); margin:0 4px; }
-.filter-btn {
-  background:none; border:1px solid var(--border); color:var(--muted);
-  font-family:'IBM Plex Mono',monospace; font-size:9px; padding:5px 12px;
-  cursor:pointer; letter-spacing:1px; text-transform:uppercase; transition:all 0.15s;
-}
-.filter-btn:hover { border-color:var(--border2); color:var(--text-dim); }
-.filter-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
-.filter-btn.deal-filter.active { border-color:var(--deal-color); color:var(--deal-color); background:rgba(110,184,200,0.08); }
-.filter-btn.activism-filter.active { border-color:var(--activism-color); color:var(--activism-color); background:rgba(200,126,110,0.08); }
-
-/* REPORTER GRID */
-.reporters-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:14px; }
-.reporter-card { background:var(--surface); border:1px solid var(--border); display:flex; flex-direction:column; transition:border-color 0.2s; }
-.reporter-card:hover { border-color:var(--border2); }
-.reporter-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.reporter-info { flex:1; min-width:0; }
-.reporter-name { font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.reporter-beat { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); margin-top:2px; }
-.outlet-badge { display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:1.5px; text-transform:uppercase; padding:3px 8px; white-space:nowrap; flex-shrink:0; }
-.badge-axios    { background:rgba(224,90,90,0.12);  color:#e07a7a; border:1px solid rgba(224,90,90,0.2); }
-.badge-bloomberg{ background:rgba(110,184,200,0.12);color:var(--accent2); border:1px solid rgba(110,184,200,0.2); }
-.badge-nyt      { background:rgba(220,220,210,0.08);color:#c8c8be; border:1px solid rgba(220,220,210,0.12); }
-.badge-reuters  { background:rgba(255,150,50,0.1);  color:#ffaa55; border:1px solid rgba(255,150,50,0.15); }
-.badge-wsj      { background:rgba(200,169,110,0.1); color:var(--accent); border:1px solid rgba(200,169,110,0.18); }
-.badge-semafor  { background:rgba(160,120,220,0.1); color:#b090e0; border:1px solid rgba(160,120,220,0.15); }
-.badge-ft       { background:rgba(255,195,100,0.1); color:#ffc364; border:1px solid rgba(255,195,100,0.18); }
-
-.articles-list { padding:6px 0; flex:1; min-height:60px; }
-
-/* ARTICLE ITEM */
-.article-item {
-  padding:9px 16px; border-bottom:1px solid var(--border);
-  transition:background 0.1s; position:relative;
-}
-.article-item:last-child { border-bottom:none; }
-.article-item:hover { background:rgba(255,255,255,0.02); }
-.article-item.hidden { display:none; }
-
-.article-row { display:flex; align-items:flex-start; gap:8px; }
-.article-title { font-size:12px; font-weight:400; line-height:1.55; margin-bottom:4px; flex:1; }
-.article-title a { color:var(--text); text-decoration:none; transition:color 0.15s; }
-.article-title a:hover { color:var(--accent); }
-
-.send-btn {
-  flex-shrink:0;
-  background:none; border:1px solid var(--border2);
-  color:var(--muted); cursor:pointer;
-  font-size:10px; padding:3px 7px; line-height:1;
-  transition:all 0.15s; white-space:nowrap;
-  font-family:'IBM Plex Mono',monospace;
-  opacity:0; pointer-events:none;
-}
-.article-item:hover .send-btn { opacity:1; pointer-events:all; }
-.send-btn:hover { border-color:var(--accent2); color:var(--accent2); }
-
-.article-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-
-/* TIMESTAMPS */
-.article-time {
-  font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted);
-  cursor:default;
-}
-.article-time:hover { color:var(--text-dim); }
-.article-source { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); background:var(--surface2); padding:1px 5px; }
-
-/* DEAL / ACTIVISM TAGS */
-.tag-deal {
-  font-family:'IBM Plex Mono',monospace; font-size:8px;
-  letter-spacing:1px; text-transform:uppercase;
-  background:rgba(110,184,200,0.1); color:var(--deal-color);
-  border:1px solid rgba(110,184,200,0.2); padding:1px 5px;
-}
-.tag-activism {
-  font-family:'IBM Plex Mono',monospace; font-size:8px;
-  letter-spacing:1px; text-transform:uppercase;
-  background:rgba(200,126,110,0.1); color:var(--activism-color);
-  border:1px solid rgba(200,126,110,0.2); padding:1px 5px;
-}
-
-/* STATES */
-.state-msg { padding:18px 16px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); }
-.state-msg.error { color:var(--red); }
-.state-msg.loading::after { content:''; animation:dots 1.4s infinite; }
-@keyframes dots { 0%,25%{content:'.'} 50%{content:'..'} 75%,100%{content:'...'} }
-.google-link { color:var(--accent)!important; text-decoration:none; }
-.google-link:hover { text-decoration:underline; }
-.card-count { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); padding:6px 16px 4px; border-top:1px solid var(--border); text-align:right; }
-
-/* NO RESULTS */
-.no-results-msg { display:none; text-align:center; padding:40px 20px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); grid-column:1/-1; }
-.no-results-msg.visible { display:block; }
-
-/* DEAL DESK */
-.dealdesk-section { margin-bottom:24px; }
-.dealdesk-card {
-  background:var(--surface); border:1px solid var(--border);
-  position:relative; overflow:hidden;
-}
-.dealdesk-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg, #b090e0, var(--accent));
-}
-.dealdesk-head {
-  padding:12px 20px; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between;
-}
-.dealdesk-label {
-  display:flex; align-items:center; gap:8px;
-  font-family:'IBM Plex Mono',monospace; font-size:9px;
-  letter-spacing:2px; text-transform:uppercase; color:#b090e0; font-weight:500;
-}
-.dealdesk-hint { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); }
-.dealdesk-input-row {
-  display:flex; gap:10px; padding:14px 20px; border-bottom:1px solid var(--border);
-  align-items:flex-start;
-}
-.dealdesk-name-input {
-  width:120px; flex-shrink:0;
-  background:var(--surface2); border:1px solid var(--border2);
-  color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:11px;
-  padding:8px 10px; outline:none; transition:border-color 0.2s;
-}
-.dealdesk-name-input:focus { border-color:#b090e0; }
-.dealdesk-name-input::placeholder { color:var(--muted); }
-.dealdesk-textarea {
-  flex:1;
-  background:var(--surface2); border:1px solid var(--border2);
-  color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:12px; font-weight:300;
-  padding:8px 12px; outline:none; resize:none; min-height:42px;
-  line-height:1.6; transition:border-color 0.2s;
-}
-.dealdesk-textarea:focus { border-color:#b090e0; }
-.dealdesk-textarea::placeholder { color:var(--muted); font-size:11px; }
-.dealdesk-post-btn {
-  flex-shrink:0;
-  background:none; border:1px solid var(--border2); color:var(--text-dim);
-  font-family:'IBM Plex Mono',monospace; font-size:10px;
-  padding:8px 16px; cursor:pointer; letter-spacing:1px; text-transform:uppercase;
-  transition:all 0.2s; align-self:flex-end;
-}
-.dealdesk-post-btn:hover { border-color:#b090e0; color:#b090e0; }
-.dealdesk-notes { padding:8px 0; max-height:280px; overflow-y:auto; }
-.dealdesk-notes::-webkit-scrollbar { width:4px; }
-.dealdesk-notes::-webkit-scrollbar-track { background:transparent; }
-.dealdesk-notes::-webkit-scrollbar-thumb { background:var(--border2); }
-.dealdesk-note {
-  padding:10px 20px; border-bottom:1px solid var(--border);
-  display:flex; align-items:flex-start; gap:12px;
-}
-.dealdesk-note:last-child { border-bottom:none; }
-.dealdesk-note:hover { background:rgba(255,255,255,0.01); }
-.note-author {
-  font-family:'IBM Plex Mono',monospace; font-size:9px;
-  color:#b090e0; letter-spacing:0.5px; white-space:nowrap;
-  flex-shrink:0; padding-top:2px; min-width:80px;
-}
-.note-body { flex:1; font-size:12px; line-height:1.6; color:var(--text); }
-.note-meta { flex-shrink:0; text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-.note-time { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); }
-.note-delete {
-  background:none; border:none; color:var(--muted); cursor:pointer;
-  font-size:11px; opacity:0; transition:opacity 0.15s; line-height:1;
-}
-.dealdesk-note:hover .note-delete { opacity:1; }
-.note-delete:hover { color:var(--red); }
-.dealdesk-empty {
-  padding:24px 20px; font-family:'IBM Plex Mono',monospace;
-  font-size:10px; color:var(--muted); text-align:center; letter-spacing:0.5px;
-}
-
-/* THEMES TAB */
-.tab-btn.themes-tab.active { color:var(--accent2); border-bottom-color:var(--accent2); }
-
-.themes-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.theme-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-
-.theme-panel::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-}
-
-.theme-panel.cloud-panel::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-.theme-panel.sectors-panel::before { background: linear-gradient(90deg, var(--accent2), #5ab87e); }
-.theme-panel.activity-panel::before { background: linear-gradient(90deg, #b090e0, var(--accent)); }
-.theme-panel.reporters-panel::before { background: linear-gradient(90deg, #ffaa55, #e07a7a); }
-
-.theme-panel-head {
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-
-.theme-panel-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--muted); font-weight: 500;
-}
-
-.theme-panel-body { padding: 20px; min-height: 200px; }
-
-/* WORD CLOUD */
-.word-cloud {
-  display: flex; flex-wrap: wrap;
-  gap: 8px; align-items: center;
-  padding: 10px 0;
-}
-
-.cloud-word {
-  cursor: default;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-weight: 600;
-  line-height: 1.2;
-  transition: opacity 0.2s;
-  letter-spacing: -0.3px;
-}
-
-.cloud-word:hover { opacity: 0.7; }
-
-/* SECTOR BARS */
-.sector-bar-row {
-  display: flex; align-items: center;
-  gap: 10px; margin-bottom: 10px;
-}
-.sector-bar-row:last-child { margin-bottom: 0; }
-.sector-name {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--text-dim);
-  width: 120px; flex-shrink: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.sector-bar-wrap { flex: 1; height: 4px; background: var(--border2); }
-.sector-bar-fill { height: 100%; transition: width 0.6s ease; }
-.sector-count {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--muted);
-  width: 24px; text-align: right; flex-shrink: 0;
-}
-
-/* ACTIVITY TIMELINE */
-.activity-chart { width: 100%; }
-.activity-bars {
-  display: flex; align-items: flex-end;
-  gap: 4px; height: 100px; margin-bottom: 8px;
-}
-.activity-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.activity-bar {
-  width: 100%; background: var(--accent);
-  transition: height 0.5s ease;
-  min-height: 2px;
-}
-.activity-bar.today { background: var(--accent2); }
-.activity-day {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 8px; color: var(--muted);
-  text-align: center;
-}
-
-/* REPORTER ACTIVITY */
-.reporter-activity-row {
-  display: flex; align-items: center;
-  gap: 10px; margin-bottom: 9px;
-}
-.reporter-activity-row:last-child { margin-bottom: 0; }
-.reporter-activity-name {
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 11px; color: var(--text-dim);
-  width: 140px; flex-shrink: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.reporter-activity-bar-wrap { flex: 1; height: 4px; background: var(--border2); }
-.reporter-activity-bar-fill { height: 100%; }
-.reporter-activity-count {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--muted);
-  width: 20px; text-align: right; flex-shrink: 0;
-}
-
-.themes-empty {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--muted);
-  text-align: center; padding: 40px 0;
-}
-
-/* RESPONSIVE */
-@media(max-width:900px) { .themes-grid { grid-template-columns: 1fr; } }
-@media(max-width:1300px) { .briefing-wrap{grid-template-columns:1fr} .stats-card{display:none} .latest-strip{grid-template-columns:repeat(3,1fr)} }
-@media(max-width:900px) { header{padding:14px 20px;flex-wrap:wrap;gap:10px} .main{padding:16px 20px 60px} .reporters-grid{grid-template-columns:1fr} .latest-strip{grid-template-columns:repeat(2,1fr)} }
-@media(max-width:520px) { .latest-strip{grid-template-columns:1fr} }
-</style>
 </head>
 <body>
+<style>
+:root{--bg:#080808;--surface:#101010;--surface2:#161616;--border:#1e1e1e;--border2:#2a2a2a;--accent:#c8a96e;--accent-dim:rgba(200,169,110,0.1);--accent2:#6eb8c8;--text:#e8e4dd;--text-dim:#999;--muted:#555;--red:#e05a5a;--green:#5ab87e;--deal-color:#6eb8c8;--activism-color:#c87e6e}
+*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+header{border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(8,8,8,0.97);backdrop-filter:blur(12px);z-index:100}
+.header-left{display:flex;align-items:center;gap:14px}.header-left h1{font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:var(--accent);letter-spacing:0.3px;white-space:nowrap}
+.header-divider{width:1px;height:16px;background:var(--border2)}.header-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pill-btn{background:none;border:1px solid var(--border2);color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 12px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s}
+.pill-btn:hover{border-color:var(--accent);color:var(--accent)}
+#countdown{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);min-width:50px}
+.status-bar{padding:6px 32px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+.status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.status-dot.live{background:var(--green);animation:pulse 2s infinite}.status-dot.partial{background:#ffaa55;animation:pulse 2s infinite}.status-dot.offline{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}.status-bar .val{color:var(--accent2)}
+.tab-bar{border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;gap:0;background:rgba(8,8,8,0.97);position:sticky;top:49px;z-index:99}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:all 0.2s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text-dim)}.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn.dealdesk-tab.active{color:#b090e0;border-bottom-color:#b090e0}.tab-btn.themes-tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.progress-bar{height:2px;background:var(--border);position:fixed;bottom:0;left:0;right:0;z-index:200}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 1s linear;width:100%}
+.main{padding:20px 32px 60px;max-width:1700px;margin:0 auto}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.section-line{flex:1;height:1px;background:var(--border)}
+.briefing-card{background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;margin-bottom:18px}
+.briefing-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.briefing-head{padding:10px 18px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.briefing-label{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:500}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.briefing-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+.briefing-text{padding:14px 18px;font-size:13px;line-height:1.85;color:var(--text);min-height:48px}
+.briefing-text.loading{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px}
+.search-wrap{margin-bottom:14px;display:flex;gap:10px;align-items:center}
+.search-input-wrap{position:relative;flex:1;max-width:400px}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:7px 32px 7px 12px;outline:none;transition:border-color 0.2s}
+.search-input::placeholder{color:var(--muted)}.search-input:focus{border-color:var(--accent)}
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;display:none}
+.search-clear.visible{display:block}.search-count{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--accent2);min-width:70px}
+.latest-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
+.latest-card{background:var(--surface);border:1px solid var(--border);padding:10px 12px;transition:all 0.2s;min-height:80px}
+.latest-card:hover{border-color:var(--border2);background:var(--surface2)}.latest-card a{text-decoration:none;color:inherit;display:block}
+.latest-badge{font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:1px;text-transform:uppercase;padding:2px 5px;margin-bottom:6px;display:inline-block}
+.latest-title{font-size:11px;line-height:1.5;color:var(--text);margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.latest-card:hover .latest-title{color:var(--accent)}.latest-meta{display:flex;justify-content:space-between;align-items:center}
+.latest-reporter{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--text-dim)}.latest-time{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
+.filter-bar{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-label{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-right:2px}
+.filter-sep{width:1px;height:14px;background:var(--border2);margin:0 4px}
+.filter-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:8.5px;padding:4px 10px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s}
+.filter-btn:hover{border-color:var(--border2);color:var(--text-dim)}.filter-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.filter-btn.deal-filter.active{border-color:var(--deal-color);color:var(--deal-color);background:rgba(110,184,200,0.08)}
+.filter-btn.activism-filter.active{border-color:var(--activism-color);color:var(--activism-color);background:rgba(200,126,110,0.08)}
+.reporters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+.reporter-card{background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;transition:border-color 0.2s;overflow:hidden}
+.reporter-card:hover{border-color:var(--border2)}
+.reporter-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.reporter-info{flex:1;min-width:0}.reporter-name{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reporter-beat{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted);margin-top:1px}
+.outlet-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;white-space:nowrap;flex-shrink:0}
+.badge-axios{background:rgba(224,90,90,0.12);color:#e07a7a;border:1px solid rgba(224,90,90,0.2)}
+.badge-bloomberg{background:rgba(110,184,200,0.12);color:var(--accent2);border:1px solid rgba(110,184,200,0.2)}
+.badge-nyt{background:rgba(220,220,210,0.08);color:#c8c8be;border:1px solid rgba(220,220,210,0.12)}
+.badge-reuters{background:rgba(255,150,50,0.1);color:#ffaa55;border:1px solid rgba(255,150,50,0.15)}
+.badge-wsj{background:rgba(200,169,110,0.1);color:var(--accent);border:1px solid rgba(200,169,110,0.18)}
+.badge-semafor{background:rgba(160,120,220,0.1);color:#b090e0;border:1px solid rgba(160,120,220,0.15)}
+.badge-ft{background:rgba(255,195,100,0.1);color:#ffc364;border:1px solid rgba(255,195,100,0.18)}
+.mode-toggle{display:flex;align-items:center;gap:3px;margin-right:6px}
+.mode-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:7px;padding:2px 5px;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px}
+.mode-btn:hover{border-color:var(--border2);color:var(--text-dim)}.mode-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.articles-list{padding:4px 0;flex:1;min-height:50px;max-height:300px;overflow-y:auto}
+.article-item{padding:7px 14px;border-bottom:1px solid var(--border);transition:background 0.1s;position:relative}
+.article-item:last-child{border-bottom:none}.article-item:hover{background:rgba(255,255,255,0.02)}.article-item.hidden{display:none}
+.article-row{display:flex;align-items:flex-start;gap:6px}.article-title{font-size:11.5px;font-weight:400;line-height:1.5;margin-bottom:3px;flex:1}
+.article-title a{color:var(--text);text-decoration:none;transition:color 0.15s}.article-title a:hover{color:var(--accent)}
+.send-btn{flex-shrink:0;background:none;border:1px solid var(--border2);color:var(--muted);cursor:pointer;font-size:9px;padding:2px 6px;line-height:1;transition:all 0.15s;font-family:'IBM Plex Mono',monospace;opacity:0;pointer-events:none}
+.article-item:hover .send-btn{opacity:1;pointer-events:all}.send-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.article-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.article-time{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}.article-source{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted);background:var(--surface2);padding:1px 4px}
+.tag-deal{font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:1px;text-transform:uppercase;background:rgba(110,184,200,0.1);color:var(--deal-color);border:1px solid rgba(110,184,200,0.2);padding:1px 4px}
+.tag-activism{font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:1px;text-transform:uppercase;background:rgba(200,126,110,0.1);color:var(--activism-color);border:1px solid rgba(200,126,110,0.2);padding:1px 4px}
+.embed-panel{flex:1;min-height:240px;position:relative;overflow:hidden;display:none}
+.embed-panel iframe{width:100%;height:100%;min-height:240px;border:none;filter:invert(0.88) hue-rotate(180deg) contrast(0.9)}
+.embed-overlay{position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--surface));pointer-events:none}
+.card-footer{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted);padding:5px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.source-badge{font-size:7.5px;letter-spacing:0.8px;text-transform:uppercase;padding:1px 5px}
+.source-live{background:rgba(90,184,126,0.1);color:var(--green);border:1px solid rgba(90,184,126,0.2)}
+.source-cached{background:rgba(255,170,85,0.1);color:#ffaa55;border:1px solid rgba(255,170,85,0.2)}
+.source-embed{background:rgba(160,120,220,0.08);color:#b090e0;border:1px solid rgba(160,120,220,0.15)}
+.state-msg{padding:14px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted)}
+.state-msg.loading::after{content:'';animation:dots 1.4s infinite}
+@keyframes dots{0%,25%{content:'.'}50%{content:'..'}75%,100%{content:'...'}}
+.no-results-msg{display:none;text-align:center;padding:30px 20px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);grid-column:1/-1}
+.no-results-msg.visible{display:block}
+.dealdesk-card{background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden}
+.dealdesk-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#b090e0,var(--accent))}
+.dealdesk-head{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dealdesk-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#b090e0;font-weight:500}
+.dealdesk-hint{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
+.dealdesk-input-row{display:flex;gap:8px;padding:12px 18px;border-bottom:1px solid var(--border);align-items:flex-start}
+.dealdesk-name-input{width:110px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:7px 10px;outline:none;transition:border-color 0.2s}
+.dealdesk-name-input:focus{border-color:#b090e0}.dealdesk-name-input::placeholder{color:var(--muted)}
+.dealdesk-textarea{flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:300;padding:7px 12px;outline:none;resize:none;min-height:38px;line-height:1.6;transition:border-color 0.2s}
+.dealdesk-textarea:focus{border-color:#b090e0}.dealdesk-textarea::placeholder{color:var(--muted);font-size:10.5px}
+.dealdesk-post-btn{flex-shrink:0;background:none;border:1px solid var(--border2);color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 14px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s}
+.dealdesk-post-btn:hover{border-color:#b090e0;color:#b090e0}
+.dealdesk-notes{padding:6px 0;max-height:300px;overflow-y:auto}.dealdesk-note{padding:8px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px}
+.dealdesk-note:last-child{border-bottom:none}.dealdesk-note:hover{background:rgba(255,255,255,0.01)}
+.note-author{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#b090e0;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;padding-top:2px;min-width:70px}
+.note-body{flex:1;font-size:11.5px;line-height:1.6;color:var(--text)}
+.note-meta{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px}.note-time{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
+.note-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;opacity:0;transition:opacity 0.15s;line-height:1}
+.dealdesk-note:hover .note-delete{opacity:1}.note-delete:hover{color:var(--red)}
+.dealdesk-empty{padding:20px 18px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);text-align:center}
+.themes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.theme-panel{background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden}
+.theme-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.theme-panel.cloud-panel::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.theme-panel.sectors-panel::before{background:linear-gradient(90deg,var(--accent2),#5ab87e)}
+.theme-panel.activity-panel::before{background:linear-gradient(90deg,#b090e0,var(--accent))}
+.theme-panel.reporters-panel::before{background:linear-gradient(90deg,#ffaa55,#e07a7a)}
+.theme-panel-head{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.theme-panel-label{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:500}
+.theme-panel-body{padding:16px 18px;min-height:180px}
+.word-cloud{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:8px 0}
+.cloud-word{cursor:default;font-family:'IBM Plex Sans',sans-serif;font-weight:600;line-height:1.2;transition:opacity 0.2s;letter-spacing:-0.3px}.cloud-word:hover{opacity:0.7}
+.sector-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sector-bar-row:last-child{margin-bottom:0}
+.sector-name{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-dim);width:110px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sector-bar-wrap{flex:1;height:3px;background:var(--border2)}.sector-bar-fill{height:100%;transition:width 0.6s ease}
+.sector-count{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);width:22px;text-align:right;flex-shrink:0}
+.activity-bars{display:flex;align-items:flex-end;gap:3px;height:90px;margin-bottom:6px}
+.activity-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.activity-bar{width:100%;background:var(--accent);transition:height 0.5s ease;min-height:2px}.activity-bar.today{background:var(--accent2)}
+.activity-day{font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--muted);text-align:center}
+.reporter-activity-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}.reporter-activity-row:last-child{margin-bottom:0}
+.reporter-activity-name{font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;color:var(--text-dim);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reporter-activity-bar-wrap{flex:1;height:3px;background:var(--border2)}.reporter-activity-bar-fill{height:100%}
+.reporter-activity-count{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);width:18px;text-align:right;flex-shrink:0}
+.themes-empty{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);text-align:center;padding:30px 0}
+@media(max-width:1300px){.latest-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){header{padding:12px 16px;flex-wrap:wrap;gap:8px}.tab-bar{padding:0 16px}.main{padding:14px 16px 60px}.reporters-grid{grid-template-columns:1fr}.latest-strip{grid-template-columns:repeat(2,1fr)}.themes-grid{grid-template-columns:1fr}.status-bar{padding:6px 16px}}
+@media(max-width:520px){.latest-strip{grid-template-columns:1fr}}
+</style>
 
 <header>
-  <div class="header-left">
-    <h1>M&A News Tracker</h1>
-    <div class="header-divider"></div>
-    <span class="header-sub">Live Reporter Intelligence</span>
-  </div>
-  <div class="header-right">
-    <div class="header-stat">Stories: <span id="story-count">—</span></div>
-    <div class="header-stat">Updated: <span id="last-updated">—</span></div>
-    <span id="countdown"></span>
-    <button id="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
-  </div>
+  <div class="header-left"><h1>M&A News Tracker</h1><div class="header-divider"></div><span class="header-sub">Live Reporter Intelligence</span></div>
+  <div class="header-right"><span id="countdown"></span><button class="pill-btn" onclick="refreshAll()">↻ Refresh</button></div>
 </header>
-
-<!-- TAB BAR -->
+<div class="status-bar" id="status-bar"><span class="status-dot" id="status-dot"></span><span>Feeds: <span class="val" id="stat-feeds">...</span></span><span>Stories: <span class="val" id="stat-stories">...</span></span><span>Updated: <span class="val" id="stat-time">...</span></span></div>
 <div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('news',this)">📰 News Feed</button>
-  <button class="tab-btn dealdesk-tab" onclick="switchTab('dealdesk',this)">✏ Deal Desk</button>
-  <button class="tab-btn themes-tab" onclick="switchTab('themes',this)">◉ Themes</button>
+  <button class="tab-btn active" onclick="switchTab('news',this)">News Feed</button>
+  <button class="tab-btn dealdesk-tab" onclick="switchTab('dealdesk',this)">Deal Desk</button>
+  <button class="tab-btn themes-tab" onclick="switchTab('themes',this)">Themes</button>
 </div>
 
-<!-- NEWS TAB -->
-<div class="tab-panel active" id="tab-news">
-<div class="main">
-
-  <!-- BRIEFING + STATS -->
-  <div class="briefing-wrap">
-    <div class="briefing-card">
-      <div class="briefing-head">
-        <div class="briefing-label"><span class="live-dot"></span> AI Weekly Briefing</div>
-        <div class="briefing-time" id="briefing-time"></div>
-      </div>
-      <div class="briefing-text loading" id="briefing-text">Waiting for headlines to load…</div>
-    </div>
-    <div class="stats-card">
-      <div class="stats-head">Dashboard Stats</div>
-      <div class="stat-row"><span class="stat-label">Reporters tracked</span><span class="stat-value">14</span></div>
-      <div class="stat-row"><span class="stat-label">Publications</span><span class="stat-value">7</span></div>
-      <div class="stat-row"><span class="stat-label">Stories loaded</span><span class="stat-value" id="stat-stories">—</span></div>
-      <div class="stat-row"><span class="stat-label">Feeds active</span><span class="stat-value" id="stat-feeds">—</span></div>
-      <div class="stat-row"><span class="stat-label">Last refresh</span><span class="stat-value" id="stat-time">—</span></div>
-    </div>
-  </div>
-
-  <!-- SEARCH -->
-  <div class="search-wrap">
-    <div class="search-input-wrap">
-      <input type="text" class="search-input" id="search-input" placeholder="Search by company, keyword, or ticker…" oninput="onSearch(this.value)">
-      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
-    </div>
-    <span class="search-count" id="search-count"></span>
-  </div>
-
-  <!-- LATEST STORIES -->
-  <div class="section-header">
-    <span class="section-label">Breaking &amp; Latest</span>
-    <div class="section-line"></div>
-  </div>
-  <div class="latest-strip" id="latest-strip">
-    <div class="latest-card"><div class="state-msg loading">Loading</div></div>
-    <div class="latest-card"><div class="state-msg loading">Loading</div></div>
-    <div class="latest-card"><div class="state-msg loading">Loading</div></div>
-    <div class="latest-card"><div class="state-msg loading">Loading</div></div>
-    <div class="latest-card"><div class="state-msg loading">Loading</div></div>
-  </div>
-
-  <!-- FILTER BAR -->
+<div class="tab-panel active" id="tab-news"><div class="main">
+  <div class="briefing-card"><div class="briefing-head"><div class="briefing-label"><span class="live-dot"></span> AI Briefing</div><div class="briefing-time" id="briefing-time"></div></div><div class="briefing-text loading" id="briefing-text">Scanning headlines…</div></div>
+  <div class="search-wrap"><div class="search-input-wrap"><input type="text" class="search-input" id="search-input" placeholder="Search headlines…" oninput="onSearch(this.value)"><button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button></div><span class="search-count" id="search-count"></span></div>
+  <div class="section-header"><span class="section-label">Breaking</span><div class="section-line"></div></div>
+  <div class="latest-strip" id="latest-strip"></div>
   <div class="filter-bar">
-    <span class="filter-label">Outlet:</span>
-    <button class="filter-btn active" onclick="filterOutlet('all',this)">All</button>
-    <button class="filter-btn" onclick="filterOutlet('Axios',this)">Axios</button>
-    <button class="filter-btn" onclick="filterOutlet('Bloomberg',this)">Bloomberg</button>
-    <button class="filter-btn" onclick="filterOutlet('NYT',this)">NYT</button>
-    <button class="filter-btn" onclick="filterOutlet('Reuters',this)">Reuters</button>
-    <button class="filter-btn" onclick="filterOutlet('WSJ',this)">WSJ</button>
-    <button class="filter-btn" onclick="filterOutlet('Semafor',this)">Semafor</button>
+    <span class="filter-label">Outlet:</span><button class="filter-btn active" onclick="filterOutlet('all',this)">All</button>
+    <button class="filter-btn" onclick="filterOutlet('Axios',this)">Axios</button><button class="filter-btn" onclick="filterOutlet('Bloomberg',this)">Bloomberg</button>
+    <button class="filter-btn" onclick="filterOutlet('NYT',this)">NYT</button><button class="filter-btn" onclick="filterOutlet('Reuters',this)">Reuters</button>
+    <button class="filter-btn" onclick="filterOutlet('WSJ',this)">WSJ</button><button class="filter-btn" onclick="filterOutlet('Semafor',this)">Semafor</button>
     <button class="filter-btn" onclick="filterOutlet('FT',this)">FT</button>
-    <div class="filter-sep"></div>
-    <span class="filter-label">Topic:</span>
-    <button class="filter-btn deal-filter" onclick="filterTopic('deal',this)">💼 Deals Only</button>
-    <button class="filter-btn activism-filter" onclick="filterTopic('activism',this)">⚡ Activism Only</button>
+    <div class="filter-sep"></div><span class="filter-label">Topic:</span>
+    <button class="filter-btn deal-filter" onclick="filterTopic('deal',this)">Deals</button>
+    <button class="filter-btn activism-filter" onclick="filterTopic('activism',this)">Activism</button>
   </div>
-
-  <!-- REPORTER GRID -->
-  <div class="reporters-grid" id="grid">
-  </div>
+  <div class="reporters-grid" id="grid"></div>
   <div class="no-results-msg" id="no-results">No articles match your search.</div>
+</div></div>
 
-</div>
-</div><!-- /tab-news -->
-
-<!-- DEAL DESK TAB -->
-<div class="tab-panel" id="tab-dealdesk">
-<div class="main">
-  <div class="dealdesk-section">
-    <div class="section-header">
-      <span class="section-label" style="color:#b090e0">Deal Desk</span>
-      <div class="section-line"></div>
-    </div>
-    <div class="dealdesk-card">
-      <div class="dealdesk-head">
-        <div class="dealdesk-label">✏ Team Notes &amp; Intelligence</div>
-        <div class="dealdesk-hint">Shared · updates every 30s · hover a note to delete</div>
-      </div>
-      <div class="dealdesk-input-row">
-        <input type="text" class="dealdesk-name-input" id="note-author" placeholder="Your name" maxlength="20">
-        <textarea class="dealdesk-textarea" id="note-text" placeholder="Add a theme, deal thought, or market observation… (Cmd+Enter to post)" rows="2" onkeydown="noteKeydown(event)"></textarea>
-        <button class="dealdesk-post-btn" onclick="postNote()">Post ↵</button>
-      </div>
-      <div class="dealdesk-notes" id="dealdesk-notes">
-        <div class="dealdesk-empty">No notes yet — be the first to add a thought.</div>
-      </div>
-    </div>
+<div class="tab-panel" id="tab-dealdesk"><div class="main">
+  <div class="dealdesk-card"><div class="dealdesk-head"><div class="dealdesk-label">Team Notes</div><div class="dealdesk-hint">Shared in real time</div></div>
+    <div class="dealdesk-input-row"><input type="text" class="dealdesk-name-input" id="note-author" placeholder="Your name" maxlength="20"><textarea class="dealdesk-textarea" id="note-text" placeholder="Add a note… (Cmd+Enter to post)" rows="2" onkeydown="noteKeydown(event)"></textarea><button class="dealdesk-post-btn" onclick="postNote()">Post</button></div>
+    <div class="dealdesk-notes" id="dealdesk-notes"><div class="dealdesk-empty">No notes yet.</div></div>
   </div>
-</div>
-</div><!-- /tab-dealdesk -->
+</div></div>
 
-<!-- THEMES TAB -->
-<div class="tab-panel" id="tab-themes">
-<div class="main">
-  <div class="section-header">
-    <span class="section-label" style="color:var(--accent2)">Weekly Themes</span>
-    <div class="section-line"></div>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);white-space:nowrap">Generated from loaded headlines</span>
-  </div>
+<div class="tab-panel" id="tab-themes"><div class="main">
+  <div class="section-header"><span class="section-label" style="color:var(--accent2)">Weekly Themes</span><div class="section-line"></div></div>
   <div class="themes-grid">
-    <div class="theme-panel cloud-panel" style="grid-column:1/-1">
-      <div class="theme-panel-head">
-        <span class="theme-panel-label">◉ Keyword Cloud</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">size = frequency this week</span>
-      </div>
-      <div class="theme-panel-body">
-        <div class="word-cloud" id="word-cloud"><div class="themes-empty">Load the news feed first, then come back here.</div></div>
-      </div>
-    </div>
-    <div class="theme-panel sectors-panel">
-      <div class="theme-panel-head">
-        <span class="theme-panel-label">◈ Sector Coverage</span>
-      </div>
-      <div class="theme-panel-body" id="sector-bars"><div class="themes-empty">Loading…</div></div>
-    </div>
-    <div class="theme-panel reporters-panel">
-      <div class="theme-panel-head">
-        <span class="theme-panel-label">◈ Reporter Activity</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">articles this week</span>
-      </div>
-      <div class="theme-panel-body" id="reporter-activity"><div class="themes-empty">Loading…</div></div>
-    </div>
-    <div class="theme-panel activity-panel" style="grid-column:1/-1">
-      <div class="theme-panel-head">
-        <span class="theme-panel-label">◈ Publishing Activity</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">articles per day · last 7 days</span>
-      </div>
-      <div class="theme-panel-body" id="activity-timeline"><div class="themes-empty">Loading…</div></div>
-    </div>
+    <div class="theme-panel cloud-panel" style="grid-column:1/-1"><div class="theme-panel-head"><span class="theme-panel-label">Keyword Cloud</span></div><div class="theme-panel-body"><div class="word-cloud" id="word-cloud"><div class="themes-empty">Load news feed first.</div></div></div></div>
+    <div class="theme-panel sectors-panel"><div class="theme-panel-head"><span class="theme-panel-label">Sector Coverage</span></div><div class="theme-panel-body" id="sector-bars"><div class="themes-empty">Loading…</div></div></div>
+    <div class="theme-panel reporters-panel"><div class="theme-panel-head"><span class="theme-panel-label">Reporter Activity</span></div><div class="theme-panel-body" id="reporter-activity"><div class="themes-empty">Loading…</div></div></div>
+    <div class="theme-panel activity-panel" style="grid-column:1/-1"><div class="theme-panel-head"><span class="theme-panel-label">Publishing Timeline</span></div><div class="theme-panel-body" id="activity-timeline"><div class="themes-empty">Loading…</div></div></div>
   </div>
-</div>
-</div><!-- /tab-themes -->
+</div></div>
 
 <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
-<!-- ▼▼▼ FIX: Load Firebase SDKs BEFORE app code ▼▼▼ -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
-// ── REPORTERS ────────────────────────────────────────────────────
-const REPORTERS = [
-  { name:"Dan Primack",         outlet:"Axios",     badge:"badge-axios",     beat:"VC · PE · M&A · Pro Rata",
-    queries:['Dan Primack Axios','Dan Primack deal','Pro Rata Primack','"Dan Primack"'] },
-  { name:"Michelle Davis",      outlet:"Bloomberg", badge:"badge-bloomberg", beat:"M&A · Deals",
-    queries:['Michelle Davis Bloomberg M&A','Michelle Davis Bloomberg deal','Michelle Davis merger','"Michelle Davis" Bloomberg'] },
-  { name:"Liana Baker",         outlet:"Bloomberg", badge:"badge-bloomberg", beat:"M&A · Deals",
-    queries:['Liana Baker Bloomberg','Liana Baker merger','Liana Baker deal','"Liana Baker"'] },
-  { name:"Scott Deveau",        outlet:"Bloomberg", badge:"badge-bloomberg", beat:"M&A · Deals",
-    queries:['Scott Deveau Bloomberg','Scott Deveau merger','Scott Deveau deal','"Scott Deveau"'] },
-  { name:"Lauren Hirsch",       outlet:"NYT",       badge:"badge-nyt",       beat:"M&A · Corporate · DealBook",
-    queries:['Lauren Hirsch DealBook','Lauren Hirsch New York Times','Lauren Hirsch merger','"Lauren Hirsch"'] },
-  { name:"Sabrina Valle",       outlet:"Reuters",   badge:"badge-reuters",   beat:"M&A Correspondent",
-    queries:['Sabrina Valle Reuters','Sabrina Valle merger','Sabrina Valle M&A','"Sabrina Valle"'] },
-  { name:"David French",        outlet:"Reuters",   badge:"badge-reuters",   beat:"M&A · Deals",
-    queries:['David French Reuters deal','David French Reuters merger','David French M&A','"David French" Reuters'] },
-  { name:"Abigail Summerville", outlet:"Reuters",   badge:"badge-reuters",   beat:"M&A · Deals",
-    queries:['Abigail Summerville Reuters','Abigail Summerville merger','Abigail Summerville deal','"Abigail Summerville"'] },
-  { name:"Lauren Thomas",       outlet:"WSJ",       badge:"badge-wsj",       beat:"M&A · Wall Street",
-    queries:['Lauren Thomas Wall Street Journal','Lauren Thomas WSJ merger','Lauren Thomas deal','"Lauren Thomas" WSJ'] },
-  { name:"Cara Lombardo",       outlet:"WSJ",       badge:"badge-wsj",       beat:"M&A · Deals · Activism",
-    queries:['Cara Lombardo Wall Street Journal','Cara Lombardo merger','Cara Lombardo deal','"Cara Lombardo"'] },
-  { name:"Ben Glickman",        outlet:"WSJ",       badge:"badge-wsj",       beat:"M&A · Deals",
-    queries:['Ben Glickman Wall Street Journal','Ben Glickman WSJ deal','Ben Glickman merger','"Ben Glickman"'] },
-  { name:"Liz Hoffman",         outlet:"Semafor",   badge:"badge-semafor",   beat:"Finance · M&A · Semafor Business",
-    queries:['Liz Hoffman Semafor','Liz Hoffman finance deal','Liz Hoffman merger','"Liz Hoffman"'] },
-  { name:"Antoine Gara",        outlet:"FT",        badge:"badge-ft",        beat:"Wall Street · PE · Deals",
-    queries:['Antoine Gara Financial Times','Antoine Gara FT deal','Antoine Gara private equity','"Antoine Gara"'] },
-  { name:"Sujeet Indap",        outlet:"FT",        badge:"badge-ft",        beat:"Activism · Corporate Finance",
-    queries:['Sujeet Indap Financial Times','Sujeet Indap activism','Sujeet Indap deal','"Sujeet Indap"'] },
+const REPORTERS=[
+  {name:"Dan Primack",outlet:"Axios",badge:"badge-axios",beat:"VC, PE, M&A",queries:['Dan Primack Axios','Dan Primack deal','"Dan Primack"']},
+  {name:"Michelle Davis",outlet:"Bloomberg",badge:"badge-bloomberg",beat:"M&A",queries:['Michelle Davis Bloomberg M&A','Michelle Davis merger','"Michelle Davis" Bloomberg']},
+  {name:"Liana Baker",outlet:"Bloomberg",badge:"badge-bloomberg",beat:"M&A",queries:['Liana Baker Bloomberg','Liana Baker deal','"Liana Baker"']},
+  {name:"Scott Deveau",outlet:"Bloomberg",badge:"badge-bloomberg",beat:"M&A",queries:['Scott Deveau Bloomberg','Scott Deveau deal','"Scott Deveau"']},
+  {name:"Lauren Hirsch",outlet:"NYT",badge:"badge-nyt",beat:"DealBook",queries:['Lauren Hirsch DealBook','Lauren Hirsch merger','"Lauren Hirsch"']},
+  {name:"Sabrina Valle",outlet:"Reuters",badge:"badge-reuters",beat:"M&A",queries:['Sabrina Valle Reuters','Sabrina Valle merger','"Sabrina Valle"']},
+  {name:"David French",outlet:"Reuters",badge:"badge-reuters",beat:"M&A",queries:['David French Reuters deal','David French Reuters M&A','"David French" Reuters']},
+  {name:"Abigail Summerville",outlet:"Reuters",badge:"badge-reuters",beat:"M&A",queries:['Abigail Summerville Reuters','Abigail Summerville deal','"Abigail Summerville"']},
+  {name:"Lauren Thomas",outlet:"WSJ",badge:"badge-wsj",beat:"M&A",queries:['Lauren Thomas Wall Street Journal','Lauren Thomas WSJ deal','"Lauren Thomas" WSJ']},
+  {name:"Cara Lombardo",outlet:"WSJ",badge:"badge-wsj",beat:"M&A, Activism",queries:['Cara Lombardo Wall Street Journal','Cara Lombardo deal','"Cara Lombardo"']},
+  {name:"Ben Glickman",outlet:"WSJ",badge:"badge-wsj",beat:"M&A",queries:['Ben Glickman Wall Street Journal','Ben Glickman deal','"Ben Glickman"']},
+  {name:"Liz Hoffman",outlet:"Semafor",badge:"badge-semafor",beat:"Finance, M&A",queries:['Liz Hoffman Semafor','Liz Hoffman deal','"Liz Hoffman"']},
+  {name:"Antoine Gara",outlet:"FT",badge:"badge-ft",beat:"PE, Deals",queries:['Antoine Gara Financial Times','Antoine Gara deal','"Antoine Gara"']},
+  {name:"Sujeet Indap",outlet:"FT",badge:"badge-ft",beat:"Activism",queries:['Sujeet Indap Financial Times','Sujeet Indap activism','"Sujeet Indap"']},
 ];
+const DEAL_KW=['acqui','merger','takeover','buyout','deal','bid','offer','transaction','purchase','sale','divest','spin-off','spinoff','ipo','private equity','leveraged','lbo','acquisition','carve-out','m&a'];
+const ACTIVISM_KW=['activist','campaign','stake','proxy','board seat','shareholder','pressure','demand','letter','short seller','hedge fund','dissident','vote','13d','13f','engagement','push','elliott','starboard','valueact','third point','icahn','pershing','trian'];
+function tagArticle(t){const s=(t||'').toLowerCase();return{isDeal:DEAL_KW.some(k=>s.includes(k)),isActivism:ACTIVISM_KW.some(k=>s.includes(k))};}
 
-// ── KEYWORD CLASSIFIERS ──────────────────────────────────────────
-const DEAL_KEYWORDS = ['acqui','merger','takeover','buyout','deal','bid','offer','transaction','purchase','sale','divest','spin-off','spinoff','ipo','private equity','leveraged','lbo','acquisition','carve-out','m&a'];
-const ACTIVISM_KEYWORDS = ['activist','campaign','stake','proxy','board seat','shareholder','pressure','demand','letter','short seller','hedge fund','dissident','vote','13d','13f','engagement','push','Elliott','Starboard','ValueAct','Third Point','Icahn','Pershing','Trian'];
+const REFRESH_MS=10*60*1000;let allArticles=[],feedsActive=0,feedsFailed=0,activeOutlet='all',activeTopic=null,searchTerm='',countdownSecs,countdownTimer,autoTimer,refreshInProgress=false;
+const reporterState={};
+const OC={Axios:{bg:'rgba(224,90,90,0.12)',color:'#e07a7a'},Bloomberg:{bg:'rgba(110,184,200,0.12)',color:'#6eb8c8'},NYT:{bg:'rgba(220,220,210,0.08)',color:'#c8c8be'},Reuters:{bg:'rgba(255,150,50,0.1)',color:'#ffaa55'},WSJ:{bg:'rgba(200,169,110,0.1)',color:'#c8a96e'},Semafor:{bg:'rgba(160,120,220,0.1)',color:'#b090e0'},FT:{bg:'rgba(255,195,100,0.1)',color:'#ffc364'}};
 
-function tagArticle(title) {
-  const t = title.toLowerCase();
-  const isDeal = DEAL_KEYWORDS.some(k => t.includes(k));
-  const isActivism = ACTIVISM_KEYWORDS.some(k => t.toLowerCase().includes(k.toLowerCase()));
-  return { isDeal, isActivism };
-}
+// Utils
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function safeUrl(u){if(!u)return'#';try{const p=new URL(u);return(p.protocol==='http:'||p.protocol==='https:')?u:'#'}catch(e){return'#'}}
+function normalizeTitle(t){return(t||'').toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function rssUrl(q){return`https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;}
+function formatTime(str){const d=new Date(str);if(isNaN(d))return'';const diff=Math.floor((Date.now()-d)/1000);if(diff<60)return`${diff}s ago`;if(diff<3600)return`${Math.floor(diff/60)}m ago`;if(diff<86400){const h=Math.floor(diff/3600),m=Math.floor((diff%3600)/60);return m>0?`${h}h ${m}m ago`:`${h}h ago`;}return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});}
+function fullTimestamp(str){const d=new Date(str);if(isNaN(d))return'';return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});}
 
-// ── STATE ────────────────────────────────────────────────────────
-const REFRESH_MS = 10 * 60 * 1000;
-let allArticles = [], feedsActive = 0;
-let activeOutlet = 'all', activeTopic = null, searchTerm = '';
-let countdownSecs, countdownTimer, autoTimer;
+// RSS
+function fetchTimeout(url,ms=10000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);return fetch(url,{signal:c.signal}).then(r=>{clearTimeout(t);return r}).catch(e=>{clearTimeout(t);throw e});}
+function parseRSS(xml){try{const doc=new DOMParser().parseFromString(xml,'text/xml');if(doc.querySelector('parsererror'))return[];const cut=Date.now()-7*864e5;return Array.from(doc.querySelectorAll('item')).map(i=>({title:i.querySelector('title')?.textContent?.replace(/ - [A-Z][^-]{2,40}$/,'')||'',link:i.querySelector('link')?.textContent||'#',pubDate:i.querySelector('pubDate')?.textContent||'',source:i.querySelector('source')?.textContent||''})).filter(a=>a.title&&(!a.pubDate||(x=>isNaN(x)||x>cut)(new Date(a.pubDate).getTime()))).sort((a,b)=>new Date(b.pubDate||0)-new Date(a.pubDate||0)).slice(0,6);}catch(e){return[];}}
 
-// ── OUTLET COLORS ────────────────────────────────────────────────
-const OUTLET_COLORS = {
-  Axios:    {bg:'rgba(224,90,90,0.12)',   color:'#e07a7a'},
-  Bloomberg:{bg:'rgba(110,184,200,0.12)', color:'#6eb8c8'},
-  NYT:      {bg:'rgba(220,220,210,0.08)', color:'#c8c8be'},
-  Reuters:  {bg:'rgba(255,150,50,0.1)',   color:'#ffaa55'},
-  WSJ:      {bg:'rgba(200,169,110,0.1)',  color:'#c8a96e'},
-  Semafor:  {bg:'rgba(160,120,220,0.1)',  color:'#b090e0'},
-  FT:       {bg:'rgba(255,195,100,0.1)',  color:'#ffc364'},
-};
-
-// ── UTILS ────────────────────────────────────────────────────────
-function escHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function escJs(s) {
-  return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n').replace(/\r/g,'');
-}
-
-function safeUrl(url) {
-  if (!url) return '#';
-  try {
-    const u = new URL(url);
-    return (u.protocol === 'http:' || u.protocol === 'https:') ? url : '#';
-  } catch(e) {
-    return '#';
-  }
-}
-
-function rssUrl(q) {
-  return `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
-}
-
-function formatTime(str) {
-  const d = new Date(str);
-  if (isNaN(d)) return '';
-  const now = new Date();
-  const diff = Math.floor((now - d) / 1000);
-  if (diff < 60)    return `${diff}s ago`;
-  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) {
-    const h = Math.floor(diff/3600);
-    const m = Math.floor((diff % 3600)/60);
-    return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
-  }
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
-         d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-}
-
-function fullTimestamp(str) {
-  const d = new Date(str);
-  if (isNaN(d)) return '';
-  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) +
-         ' at ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
-}
-
-function parseRSS(xml) {
-  try {
-    const doc = new DOMParser().parseFromString(xml,'text/xml');
-    // Check for XML parse errors
-    if (doc.querySelector('parsererror')) return [];
-    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-    const cutoff = Date.now() - SEVEN_DAYS;
-    return Array.from(doc.querySelectorAll('item'))
-      .map(item => ({
-        title:   item.querySelector('title')?.textContent?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
-        link:    item.querySelector('link')?.textContent || '#',
-        pubDate: item.querySelector('pubDate')?.textContent || '',
-        source:  item.querySelector('source')?.textContent || ''
-      }))
-      .filter(a => {
-        if (!a.title) return false; // skip empty titles
-        if (!a.pubDate) return true;
-        const d = new Date(a.pubDate);
-        return isNaN(d) || d.getTime() > cutoff;
-      })
-      .sort((a, b) => {
-        const da = a.pubDate ? new Date(a.pubDate) : new Date(0);
-        const db = b.pubDate ? new Date(b.pubDate) : new Date(0);
-        return db - da;
-      })
-      .slice(0, 6);
-  } catch(e) {
-    return [];
-  }
-}
-
-// Fetch with timeout helper
-function fetchWithTimeout(url, timeoutMs = 10000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { signal: controller.signal })
-    .then(r => { clearTimeout(timer); return r; })
-    .catch(e => { clearTimeout(timer); throw e; });
-}
-
-// Small delay helper to avoid hammering proxies
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// Track which proxy is working best (start with first)
-let preferredProxyIndex = 0;
-
-async function tryFetch(query) {
-  const url = rssUrl(query);
-  const enc = encodeURIComponent(url);
-
-  // Proxy configs: each has a fetch URL and a parser
-  const proxies = [
-    {
-      name: 'allorigins',
-      fetchUrl: `https://api.allorigins.win/get?url=${enc}`,
-      parse: async (r) => {
-        const d = await r.json();
-        return d.contents ? parseRSS(d.contents) : [];
-      }
-    },
-    {
-      name: 'rss2json',
-      fetchUrl: `https://api.rss2json.com/v1/api.json?rss_url=${enc}`,
-      parse: async (r) => {
-        const d = await r.json();
-        if (d.status !== 'ok' || !d.items?.length) return [];
-        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-        const cutoff = Date.now() - SEVEN_DAYS;
-        return d.items
-          .map(i => ({
-            title:   i.title?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
-            link:    i.link || '#', pubDate: i.pubDate || '', source: i.source_id || ''
-          }))
-          .filter(a => {
-            if (!a.pubDate) return true;
-            const d2 = new Date(a.pubDate);
-            return isNaN(d2) || d2.getTime() > cutoff;
-          })
-          .sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0))
-          .slice(0, 6);
-      }
-    },
-    {
-      name: 'corsproxy',
-      fetchUrl: `https://corsproxy.io/?url=${enc}`,
-      parse: async (r) => {
-        const text = await r.text();
-        return parseRSS(text);
-      }
-    },
-    {
-      name: 'codetabs',
-      fetchUrl: `https://api.codetabs.com/v1/proxy?quest=${enc}`,
-      parse: async (r) => {
-        const text = await r.text();
-        return parseRSS(text);
-      }
-    },
-    {
-      name: 'allorigins-raw',
-      fetchUrl: `https://api.allorigins.win/raw?url=${enc}`,
-      parse: async (r) => {
-        const text = await r.text();
-        return parseRSS(text);
-      }
-    }
+let prefProxy=0;
+async function tryFetch(query){
+  const url=rssUrl(query),enc=encodeURIComponent(url);
+  const px=[
+    {u:`https://api.allorigins.win/get?url=${enc}`,p:async r=>{const d=await r.json();return d.contents?parseRSS(d.contents):[];}},
+    {u:`https://api.rss2json.com/v1/api.json?rss_url=${enc}`,p:async r=>{const d=await r.json();if(d.status!=='ok'||!d.items?.length)return[];const cut=Date.now()-7*864e5;return d.items.map(i=>({title:i.title?.replace(/ - [A-Z][^-]{2,40}$/,'')||'',link:i.link||'#',pubDate:i.pubDate||'',source:i.source_id||''})).filter(a=>a.title&&(!a.pubDate||(x=>isNaN(x)||x>cut)(new Date(a.pubDate).getTime()))).sort((a,b)=>new Date(b.pubDate||0)-new Date(a.pubDate||0)).slice(0,6);}},
+    {u:`https://corsproxy.io/?url=${enc}`,p:async r=>parseRSS(await r.text())},
+    {u:`https://api.allorigins.win/raw?url=${enc}`,p:async r=>parseRSS(await r.text())},
+    {u:`https://api.codetabs.com/v1/proxy?quest=${enc}`,p:async r=>parseRSS(await r.text())},
   ];
-
-  // Try preferred proxy first, then cycle through others
-  const order = [];
-  for (let i = 0; i < proxies.length; i++) {
-    order.push(proxies[(preferredProxyIndex + i) % proxies.length]);
-  }
-
-  for (let i = 0; i < order.length; i++) {
-    const proxy = order[i];
-    try {
-      const r = await fetchWithTimeout(proxy.fetchUrl, 10000);
-      if (!r.ok) { await delay(300); continue; }
-      const articles = await proxy.parse(r);
-      if (articles.length) {
-        // Remember this proxy worked
-        preferredProxyIndex = proxies.indexOf(proxy);
-        return articles;
-      }
-    } catch(e) {
-      // Timeout or network error, try next proxy
-    }
-    // Brief pause before trying next proxy to avoid rate limits
-    if (i < order.length - 1) await delay(300);
-  }
-  return [];
+  const order=[];for(let i=0;i<px.length;i++)order.push(px[(prefProxy+i)%px.length]);
+  for(let i=0;i<order.length;i++){try{const r=await fetchTimeout(order[i].u,10000);if(!r.ok){await delay(200);continue;}const a=await order[i].p(r);if(a.length){prefProxy=px.indexOf(order[i]);return a;}}catch(e){}if(i<order.length-1)await delay(200);}
+  return[];
 }
 
-// ── SEARCH ───────────────────────────────────────────────────────
-function onSearch(val) {
-  searchTerm = val.trim().toLowerCase();
-  document.getElementById('search-clear').classList.toggle('visible', searchTerm.length > 0);
-  applyFilters();
-}
+// Cache
+const CK='mna_cache';
+function saveCache(){try{const d={};REPORTERS.forEach(r=>{const a=allArticles.filter(x=>x.reporter===r.name);if(a.length)d[r.name]={a,ts:Date.now()};});localStorage.setItem(CK,JSON.stringify({ts:Date.now(),r:d}));}catch(e){}}
+function loadCacheFor(name){try{const raw=localStorage.getItem(CK);if(!raw)return null;const d=JSON.parse(raw);if(Date.now()-d.ts>4*36e5)return null;const e=d.r?.[name];return e?.a?.length?e:null;}catch(e){return null;}}
 
-function clearSearch() {
-  document.getElementById('search-input').value = '';
-  searchTerm = '';
-  document.getElementById('search-clear').classList.remove('visible');
-  document.getElementById('search-count').textContent = '';
-  applyFilters();
-}
+// Search/Filter
+function onSearch(v){searchTerm=v.trim().toLowerCase();document.getElementById('search-clear').classList.toggle('visible',searchTerm.length>0);applyFilters();}
+function clearSearch(){document.getElementById('search-input').value='';searchTerm='';document.getElementById('search-clear').classList.remove('visible');document.getElementById('search-count').textContent='';applyFilters();}
+function filterOutlet(o,b){activeOutlet=o;document.querySelectorAll('.filter-btn:not(.deal-filter):not(.activism-filter)').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters();}
+function filterTopic(t,b){if(activeTopic===t){activeTopic=null;b.classList.remove('active');}else{activeTopic=t;document.querySelectorAll('.deal-filter,.activism-filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');}applyFilters();}
+function applyFilters(){let total=0;document.querySelectorAll('.reporter-card').forEach(c=>{const o=c.dataset.outlet,match=activeOutlet==='all'||o===activeOutlet;c.style.display=match?'':'none';if(!match)return;c.querySelectorAll('.article-item').forEach(item=>{const t=item.dataset.title||'',isDeal=item.dataset.deal==='true',isAct=item.dataset.activism==='true';const show=(!searchTerm||t.includes(searchTerm))&&(!activeTopic||(activeTopic==='deal'&&isDeal)||(activeTopic==='activism'&&isAct));item.classList.toggle('hidden',!show);if(show)total++;});});document.getElementById('search-count').textContent=searchTerm?`${total} result${total!==1?'s':''}`:'';document.getElementById('no-results').classList.toggle('visible',total===0&&(!!searchTerm||!!activeTopic));}
 
-// ── FILTERS ──────────────────────────────────────────────────────
-function filterOutlet(outlet, btn) {
-  activeOutlet = outlet;
-  document.querySelectorAll('.filter-btn:not(.deal-filter):not(.activism-filter)').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilters();
-}
-
-function filterTopic(topic, btn) {
-  if (activeTopic === topic) {
-    activeTopic = null;
-    btn.classList.remove('active');
-  } else {
-    activeTopic = topic;
-    document.querySelectorAll('.deal-filter,.activism-filter').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-  applyFilters();
-}
-
-function applyFilters() {
-  let totalVisible = 0;
-
-  document.querySelectorAll('.reporter-card').forEach(card => {
-    const outlet = card.dataset.outlet;
-    const outletMatch = activeOutlet === 'all' || outlet === activeOutlet;
-    card.style.display = outletMatch ? '' : 'none';
-
-    if (!outletMatch) return;
-
-    let cardVisible = 0;
-    card.querySelectorAll('.article-item').forEach(item => {
-      const title = item.dataset.title || '';
-      const isDeal = item.dataset.deal === 'true';
-      const isActivism = item.dataset.activism === 'true';
-
-      const searchMatch = !searchTerm || title.includes(searchTerm);
-      const topicMatch = !activeTopic ||
-        (activeTopic === 'deal' && isDeal) ||
-        (activeTopic === 'activism' && isActivism);
-
-      const show = searchMatch && topicMatch;
-      item.classList.toggle('hidden', !show);
-      if (show) { cardVisible++; totalVisible++; }
-    });
-
-    const noMsg = card.querySelector('.no-articles-msg');
-    if (noMsg) noMsg.style.display = cardVisible === 0 ? 'block' : 'none';
-  });
-
-  if (searchTerm) {
-    document.getElementById('search-count').textContent = `${totalVisible} result${totalVisible!==1?'s':''}`;
-  } else {
-    document.getElementById('search-count').textContent = '';
-  }
-
-  document.getElementById('no-results').classList.toggle('visible', totalVisible === 0 && (searchTerm || activeTopic));
-}
-
-// ── EMAIL SEND ───────────────────────────────────────────────────
-function sendArticle(title, link, reporter, outlet) {
-  const subject = encodeURIComponent(`[M&A News] ${title}`);
-  const body = encodeURIComponent(`Thought this might be of interest:\n\n${title}\n${reporter} · ${outlet}\n\n${link}\n\n—\nSent from M&A News Tracker`);
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
-}
-
-// ── RENDER ARTICLES ──────────────────────────────────────────────
-function renderArticles(body, articles, reporter) {
-  body.innerHTML = articles.map((a, idx) => {
-    const tags = tagArticle(a.title);
-    const tagHtml = [
-      tags.isDeal     ? '<span class="tag-deal">Deal</span>' : '',
-      tags.isActivism ? '<span class="tag-activism">Activism</span>' : ''
-    ].join('');
-    const safeLink = safeUrl(a.link);
-    const titleHtml = escHtml(a.title);
-    const titleLower = escHtml((a.title||'').toLowerCase());
-    return `<div class="article-item"
-        data-title="${titleLower}"
-        data-deal="${tags.isDeal}"
-        data-activism="${tags.isActivism}"
-        data-idx="${idx}">
-      <div class="article-row">
-        <div class="article-title">
-          <a href="${escHtml(safeLink)}" target="_blank" rel="noopener">${titleHtml}</a>
-        </div>
-        <button class="send-btn"
-          data-send-title="${escHtml(a.title)}"
-          data-send-link="${escHtml(safeLink)}"
-          data-send-reporter="${escHtml(reporter.name)}"
-          data-send-outlet="${escHtml(reporter.outlet)}"
-          title="Email this article">✉</button>
-      </div>
-      <div class="article-meta">
-        ${a.pubDate ? `<span class="article-time" title="${escHtml(fullTimestamp(a.pubDate))}">${formatTime(a.pubDate)}</span>` : ''}
-        ${a.source  ? `<span class="article-source">${escHtml(a.source)}</span>` : ''}
-        ${tagHtml}
-      </div>
-    </div>`;
-  }).join('') + `<div class="no-articles-msg state-msg" style="display:none">No matching articles.</div>`;
-}
-
-// Event delegation for send buttons (avoids inline onclick XSS issues)
-document.addEventListener('click', function(e) {
-  const btn = e.target.closest('.send-btn[data-send-title]');
-  if (btn) {
-    sendArticle(
-      btn.dataset.sendTitle,
-      btn.dataset.sendLink,
-      btn.dataset.sendReporter,
-      btn.dataset.sendOutlet
-    );
-  }
+// Render
+function sendArticle(t,l,r,o){window.location.href=`mailto:?subject=${encodeURIComponent('[M&A] '+t)}&body=${encodeURIComponent(t+'\n'+r+' / '+o+'\n\n'+l+'\n\nvia M&A Tracker')}`;}
+document.addEventListener('click',e=>{
+  const s=e.target.closest('.send-btn[data-t]');if(s)sendArticle(s.dataset.t,s.dataset.l,s.dataset.r,s.dataset.o);
+  const d=e.target.closest('.note-delete[data-id]');if(d)deleteNote(d.dataset.id);
+  const m=e.target.closest('.mode-btn[data-mode]');if(m){const card=m.closest('.reporter-card'),name=card?.dataset.reporter;if(name)toggleMode(name,m.dataset.mode);}
 });
-
-// ── LATEST STRIP ─────────────────────────────────────────────────
-function updateLatestStrip() {
-  const top5 = allArticles
-    .filter(a=>a.pubDate)
-    .sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate))
-    .slice(0,5);
-  if (!top5.length) return;
-  document.getElementById('latest-strip').innerHTML = top5.map(a=>{
-    const c = OUTLET_COLORS[a.outlet]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
-    const safeLink = safeUrl(a.link);
-    return `<div class="latest-card">
-      <a href="${escHtml(safeLink)}" target="_blank" rel="noopener">
-        <div class="latest-badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.color}33">${escHtml(a.outlet)}</div>
-        <div class="latest-title">${escHtml(a.title)}</div>
-        <div class="latest-meta">
-          <span class="latest-reporter">${escHtml(a.reporter)}</span>
-          <span class="latest-time" title="${escHtml(fullTimestamp(a.pubDate))}">${formatTime(a.pubDate)}</span>
-        </div>
-      </a>
-    </div>`;
+function renderArticles(el,articles,reporter){
+  el.innerHTML=articles.map(a=>{const tags=tagArticle(a.title),sl=safeUrl(a.link),th=escHtml(a.title);
+    return`<div class="article-item" data-title="${escHtml((a.title||'').toLowerCase())}" data-deal="${tags.isDeal}" data-activism="${tags.isActivism}"><div class="article-row"><div class="article-title"><a href="${escHtml(sl)}" target="_blank" rel="noopener">${th}</a></div><button class="send-btn" data-t="${escHtml(a.title)}" data-l="${escHtml(sl)}" data-r="${escHtml(reporter.name)}" data-o="${escHtml(reporter.outlet)}">✉</button></div><div class="article-meta">${a.pubDate?`<span class="article-time" title="${escHtml(fullTimestamp(a.pubDate))}">${formatTime(a.pubDate)}</span>`:''}${a.source?`<span class="article-source">${escHtml(a.source)}</span>`:''}${tags.isDeal?'<span class="tag-deal">Deal</span>':''}${tags.isActivism?'<span class="tag-activism">Activism</span>':''}</div></div>`;
   }).join('');
 }
 
-function updateStats() {
-  const n = allArticles.length;
-  document.getElementById('story-count').textContent = n;
-  document.getElementById('stat-stories').textContent = n;
-  document.getElementById('stat-feeds').textContent = feedsActive + ' / ' + REPORTERS.length;
+// Latest strip
+function updateLatestStrip(){
+  const top5=allArticles.filter(a=>a.pubDate).sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate)).slice(0,5);
+  if(!top5.length){document.getElementById('latest-strip').innerHTML='<div class="state-msg" style="grid-column:1/-1;color:var(--text-dim)">Headlines appear as feeds load.</div>';return;}
+  document.getElementById('latest-strip').innerHTML=top5.map(a=>{const c=OC[a.outlet]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};return`<div class="latest-card"><a href="${escHtml(safeUrl(a.link))}" target="_blank" rel="noopener"><div class="latest-badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.color}33">${escHtml(a.outlet)}</div><div class="latest-title">${escHtml(a.title)}</div><div class="latest-meta"><span class="latest-reporter">${escHtml(a.reporter)}</span><span class="latest-time">${formatTime(a.pubDate)}</span></div></a></div>`;}).join('');
+}
+function updateStatus(){
+  document.getElementById('stat-stories').textContent=allArticles.length;
+  document.getElementById('stat-feeds').textContent=`${feedsActive}/${REPORTERS.length} live`;
+  const dot=document.getElementById('status-dot');
+  dot.className=feedsActive===REPORTERS.length?'status-dot live':feedsActive>0?'status-dot partial':'status-dot offline';
 }
 
-// ── AI BRIEFING ──────────────────────────────────────────────────
-async function generateBriefing() {
-  const el = document.getElementById('briefing-text');
-  const timeEl = document.getElementById('briefing-time');
-
-  // Wait for feeds to load (check every 500ms, max 45s to allow for retries)
-  let waited = 0;
-  while (totalReportersDone < totalReportersToFetch && waited < 45000) {
-    await new Promise(r => setTimeout(r, 500));
-    waited += 500;
-  }
-
-  if (!allArticles.length) {
-    el.textContent = 'No articles loaded — hit Refresh to try again.';
-    el.classList.remove('loading'); return;
-  }
-  const headlines = allArticles
-    .filter(a=>a.title)
-    .sort((a,b)=>new Date(b.pubDate||0)-new Date(a.pubDate||0))
-    .slice(0,25)
-    .map(a=>`• ${a.title} (${a.reporter}, ${a.outlet})`).join('\n');
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1000,
-        messages:[{role:'user',content:`You are a senior M&A intelligence analyst writing for deal professionals. Based on the headlines below, write a sharp 3-4 sentence briefing focusing only on the most significant and newsworthy stories — specific deals, activist campaigns, and major corporate events. Do not mention volume of coverage, number of stories, or how many reporters covered something. Be concrete — name companies, deals, and people where possible. Write like a Bloomberg Intelligence note: authoritative, precise, no filler.\n\nHeadlines:\n${headlines}\n\nBriefing only — no label or intro.`}]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text;
-    if (text) {
-      el.textContent = text; el.classList.remove('loading');
-      timeEl.textContent = 'AI-generated · ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      return;
-    }
-  } catch(e) {}
-  const outlets = [...new Set(allArticles.map(a=>a.outlet))].join(', ');
-  const top3 = allArticles.slice(0,3).map(a=>a.title).filter(Boolean).join(' · ');
-  el.textContent = `Tracking ${allArticles.length} stories across ${outlets}. Headlines: ${top3}.`;
-  el.classList.remove('loading');
-  timeEl.textContent = 'Auto-summary · ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-}
-
-// Normalize title for dedup: lowercase, collapse whitespace, strip punctuation
-function normalizeTitle(t) {
-  return (t||'').toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
-}
-
-// ── FETCH REPORTER ───────────────────────────────────────────────
-let totalReportersDone = 0;
-let totalReportersToFetch = 0;
-let isRetryPhase = false;
-
-async function fetchReporter(reporter) {
-  const id = `card-${reporter.name.replace(/\s+/g,'-')}`;
-  const body = document.querySelector(`#${id} .articles-list`);
-  if (!body) return;
-  body.innerHTML = '<div class="state-msg loading">Fetching</div>';
-
-  let articles = [];
-  for (const q of reporter.queries) {
-    articles = await tryFetch(q);
-    if (articles.length) break;
-  }
-
-  totalReportersDone++;
-
-  if (articles.length) {
-    renderArticles(body, articles, reporter);
-    articles.forEach(a => {
-      const norm = normalizeTitle(a.title);
-      if (!allArticles.find(x => normalizeTitle(x.title) === norm))
-        allArticles.push({...a, reporter:reporter.name, outlet:reporter.outlet});
-    });
-    feedsActive++;
-    updateLatestStrip();
-    updateStats();
-    const footer = document.querySelector(`#${id} .card-count`);
-    if (footer) footer.textContent = `${articles.length} articles`;
-    applyFilters();
-  } else {
-    body.innerHTML = `<div class="state-msg error">Feed unavailable — <a class="google-link" href="https://news.google.com/search?q=${encodeURIComponent(reporter.queries[0])}" target="_blank">search Google News ↗</a></div>`;
-  }
-
-  // Only finalize after retries are complete (not during first pass)
-  if (!isRetryPhase && totalReportersDone >= totalReportersToFetch) {
-    // Don't finalize yet, retries may happen
-  }
-}
-
-// Concurrency-limited parallel fetch with stagger + retry for failures
-async function fetchAllReporters(reporters) {
-  totalReportersDone = 0;
-  totalReportersToFetch = reporters.length;
-  isRetryPhase = false;
-  const failedReporters = [];
-  const queue = [...reporters];
-  const CONCURRENCY = 3;
-
-  async function worker() {
-    while (queue.length) {
-      const reporter = queue.shift();
-      await fetchReporter(reporter);
-      // Check if it failed (no articles loaded for this reporter)
-      const id = `card-${reporter.name.replace(/\s+/g,'-')}`;
-      const card = document.querySelector(`#${id} .articles-list`);
-      if (card && card.querySelector('.state-msg.error')) {
-        failedReporters.push(reporter);
-      }
-      // Small stagger between reporters to avoid hammering proxies
-      if (queue.length) await delay(500);
-    }
-  }
-
-  const workers = [];
-  for (let i = 0; i < Math.min(CONCURRENCY, reporters.length); i++) {
-    workers.push(worker());
-  }
-  await Promise.all(workers);
-
-  // Retry failed reporters once (proxy might have recovered)
-  if (failedReporters.length > 0 && failedReporters.length < reporters.length) {
-    isRetryPhase = true;
-    console.log(`Retrying ${failedReporters.length} failed feeds...`);
-    await delay(2000);
-    for (const reporter of failedReporters) {
-      await fetchReporter(reporter);
-      await delay(800);
-    }
-    isRetryPhase = false;
-  }
-
-  // Now finalize after everything (including retries) is done
-  finalizeLatestStrip();
-}
-
-// Show final state on latest strip if no articles loaded
-function finalizeLatestStrip() {
-  if (allArticles.length === 0) {
-    document.getElementById('latest-strip').innerHTML =
-      `<div style="grid-column:1/-1" class="state-msg error">
-        All RSS feeds timed out or are unavailable. Try refreshing, or
-        <a class="google-link" href="https://news.google.com/search?q=merger+acquisition+deal" target="_blank">browse Google News directly ↗</a>
-      </div>`;
-  }
-}
-
-// ── GRID BUILD ───────────────────────────────────────────────────
-function buildGrid() {
-  document.getElementById('grid').innerHTML = REPORTERS.map(r=>{
-    const id = `card-${r.name.replace(/\s+/g,'-')}`;
-    return `<div class="reporter-card" id="${id}" data-outlet="${r.outlet}">
-      <div class="reporter-header">
-        <div class="reporter-info">
-          <div class="reporter-name">${r.name}</div>
-          <div class="reporter-beat">${r.beat}</div>
-        </div>
-        <span class="outlet-badge ${r.badge}">${r.outlet}</span>
-      </div>
-      <div class="articles-list"><div class="state-msg loading">Fetching</div></div>
-      <div class="card-count"></div>
-    </div>`;
+// Grid + Mode toggle
+function buildGrid(){
+  document.getElementById('grid').innerHTML=REPORTERS.map(r=>{
+    const id=`card-${r.name.replace(/\s+/g,'-')}`;reporterState[r.name]={mode:'rss',loaded:false};
+    return`<div class="reporter-card" id="${id}" data-outlet="${r.outlet}" data-reporter="${r.name}"><div class="reporter-header"><div class="reporter-info"><div class="reporter-name">${escHtml(r.name)}</div><div class="reporter-beat">${escHtml(r.beat)}</div></div><div class="mode-toggle"><button class="mode-btn active" data-mode="rss">Feed</button><button class="mode-btn" data-mode="embed">Search</button></div><span class="outlet-badge ${r.badge}">${escHtml(r.outlet)}</span></div><div class="articles-list" data-view="rss"><div class="state-msg loading">Fetching</div></div><div class="embed-panel" data-view="embed"></div><div class="card-footer"><span></span><span></span></div></div>`;
   }).join('');
 }
 
-// ── COUNTDOWN ────────────────────────────────────────────────────
-function startCountdown() {
-  countdownSecs = REFRESH_MS / 1000;
-  document.getElementById('progress').style.width = '100%';
-  clearInterval(countdownTimer);
-  countdownTimer = setInterval(()=>{
-    countdownSecs--;
-    const m = Math.floor(countdownSecs/60), s = countdownSecs%60;
-    document.getElementById('countdown').textContent = `↻ ${m}:${String(s).padStart(2,'0')}`;
-    document.getElementById('progress').style.width = ((countdownSecs/(REFRESH_MS/1000))*100)+'%';
-    if (countdownSecs<=0) refreshAll();
-  },1000);
-}
-
-// ── REFRESH ALL ──────────────────────────────────────────────────
-let refreshInProgress = false;
-
-function refreshAll() {
-  // Prevent stacking refreshes
-  if (refreshInProgress) return;
-  refreshInProgress = true;
-
-  allArticles = []; feedsActive = 0;
-  clearInterval(countdownTimer);
-  clearInterval(autoTimer);
-
-  const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('last-updated').textContent = now;
-  document.getElementById('stat-time').textContent = now;
-  document.getElementById('briefing-text').textContent = 'Generating briefing from live headlines…';
-  document.getElementById('briefing-text').classList.add('loading');
-  document.getElementById('briefing-time').textContent = '';
-  document.getElementById('story-count').textContent = '—';
-  document.getElementById('stat-stories').textContent = '—';
-  document.getElementById('stat-feeds').textContent = '—';
-  document.getElementById('latest-strip').innerHTML = [1,2,3,4,5].map(()=>
-    `<div class="latest-card"><div class="state-msg loading">Loading</div></div>`).join('');
-  fetchAllReporters(REPORTERS).finally(() => {
-    refreshInProgress = false;
-  });
-  generateBriefing();
-  startCountdown();
-  autoTimer = setInterval(refreshAll, REFRESH_MS);
-}
-
-// ── THEMES ENGINE ───────────────────────────────────────────────
-const STOP_WORDS = new Set([
-  'the','a','an','and','or','but','in','on','at','to','for','of','with',
-  'by','from','as','is','was','are','were','be','been','has','have','had',
-  'its','it','this','that','these','those','will','would','could','should',
-  'may','might','can','do','does','did','not','no','nor','so','yet','both',
-  'either','each','few','more','most','other','some','such','than','then',
-  'too','very','just','about','after','before','between','into','through',
-  'during','over','under','again','further','once','says','said','say',
-  'new','report','plans','plan','sources','source','deal','deals','company',
-  'firms','firm','inc','corp','co','ltd','llc','group','holdings','us','uk',
-  'amid','amid','per','top','big','set','hit','get','put','how','why','when',
-  'what','who','which','their','they','them','his','her','our','your','my',
-  'we','he','she','i','you','up','out','off','all','any','been','also',
-  'than','now','he','she','we','use','used','take','make','made','two',
-  'one','three','four','five','six','seven','eight','nine','ten','first',
-  'second','third','last','next','long','high','low','large','small',
-]);
-
-const SECTOR_KEYWORDS = {
-  'Healthcare / Pharma': ['pharma','drug','biotech','health','medical','hospital','therapeutics','biologic','FDA','clinical','oncology','vaccine','genomic','life sciences'],
-  'Technology': ['tech','software','AI','cloud','data','digital','cyber','semiconductor','chip','platform','SaaS','fintech','startup'],
-  'Energy': ['energy','oil','gas','power','renewable','solar','wind','utility','pipeline','LNG','petroleum','coal','nuclear'],
-  'Financial Services': ['bank','insurance','asset management','wealth','credit','lending','payments','financial','capital markets','broker'],
-  'Media & Telecom': ['media','telecom','streaming','broadcast','cable','wireless','content','publishing','entertainment'],
-  'Industrials': ['aerospace','defense','manufacturing','logistics','transport','infrastructure','construction','engineering'],
-  'Consumer / Retail': ['retail','consumer','brand','restaurant','food','beverage','apparel','e-commerce','luxury'],
-  'Real Estate': ['real estate','REIT','property','commercial','residential','housing'],
-};
-
-function buildWordCloud() {
-  if (!allArticles.length) return;
-
-  const freq = {};
-  allArticles.forEach(a => {
-    const words = (a.title || '').toLowerCase()
-      .replace(/[^a-z\s'-]/g, ' ')
-      .split(/\s+/)
-      .filter(w => w.length > 3 && !STOP_WORDS.has(w));
-    words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
-  });
-
-  const sorted = Object.entries(freq)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 60);
-
-  if (!sorted.length) return;
-
-  const maxFreq = sorted[0][1];
-  const minFreq = sorted[sorted.length - 1][1];
-
-  const dealWords = new Set(['acquisition','merger','takeover','buyout','bid','offer','acquire','acquired','acquires','transaction','purchase','divest','spinoff','ipo','lbo','leverage','private','equity']);
-  const activismWords = new Set(['activist','proxy','stake','shareholder','campaign','dissident','board','pressure','letter','vote','engagement','fund','hedge']);
-
-  const cloud = document.getElementById('word-cloud');
-  if (!cloud) return;
-
-  cloud.innerHTML = sorted.map(([word, count]) => {
-    const ratio = minFreq === maxFreq ? 0.5 : (count - minFreq) / (maxFreq - minFreq);
-    const size = Math.round(11 + ratio * 28);
-    const opacity = 0.5 + ratio * 0.5;
-
-    let color;
-    if (dealWords.has(word))       color = 'var(--accent2)';
-    else if (activismWords.has(word)) color = 'var(--activism-color)';
-    else if (ratio > 0.7)          color = 'var(--accent)';
-    else if (ratio > 0.4)          color = 'var(--text)';
-    else                            color = 'var(--text-dim)';
-
-    return `<span class="cloud-word" style="font-size:${size}px;color:${color};opacity:${opacity}" title="${count} mention${count!==1?'s':''}">${word}</span>`;
-  }).join('');
-}
-
-function buildSectorBars() {
-  if (!allArticles.length) return;
-  const el = document.getElementById('sector-bars');
-  if (!el) return;
-
-  const counts = {};
-  Object.keys(SECTOR_KEYWORDS).forEach(s => counts[s] = 0);
-
-  allArticles.forEach(a => {
-    const t = (a.title || '').toLowerCase();
-    Object.entries(SECTOR_KEYWORDS).forEach(([sector, kws]) => {
-      if (kws.some(k => t.includes(k.toLowerCase()))) counts[sector]++;
-    });
-  });
-
-  const sorted = Object.entries(counts)
-    .filter(([,n]) => n > 0)
-    .sort((a, b) => b[1] - a[1]);
-
-  if (!sorted.length) {
-    el.innerHTML = '<div class="themes-empty">Not enough sector-specific headlines yet.</div>';
-    return;
+function toggleMode(name,mode){
+  const r=REPORTERS.find(x=>x.name===name);if(!r)return;
+  const card=document.getElementById(`card-${name.replace(/\s+/g,'-')}`);if(!card)return;
+  const rss=card.querySelector('[data-view="rss"]'),emb=card.querySelector('[data-view="embed"]');
+  card.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  if(mode==='rss'){rss.style.display='';emb.style.display='none';}
+  else{rss.style.display='none';emb.style.display='';
+    if(!emb.dataset.loaded){const q=encodeURIComponent(`${r.name} ${r.outlet}`);emb.innerHTML=`<iframe src="https://news.google.com/search?q=${q}&hl=en-US&gl=US&ceid=US:en" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups"></iframe><div class="embed-overlay"></div>`;emb.dataset.loaded='1';}
   }
-
-  const max = sorted[0][1];
-  const colors = ['var(--accent)','var(--accent2)','#5ab87e','#b090e0','#ffaa55','#e07a7a','var(--accent)','var(--accent2)'];
-
-  el.innerHTML = sorted.map(([sector, count], i) => `
-    <div class="sector-bar-row">
-      <div class="sector-name">${sector}</div>
-      <div class="sector-bar-wrap">
-        <div class="sector-bar-fill" style="width:${(count/max*100).toFixed(1)}%;background:${colors[i%colors.length]}"></div>
-      </div>
-      <div class="sector-count">${count}</div>
-    </div>`).join('');
+  reporterState[name].mode=mode;
 }
 
-function buildReporterActivity() {
-  if (!allArticles.length) return;
-  const el = document.getElementById('reporter-activity');
-  if (!el) return;
-
-  const counts = {};
-  allArticles.forEach(a => {
-    if (a.reporter) counts[a.reporter] = (counts[a.reporter] || 0) + 1;
-  });
-
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  if (!sorted.length) return;
-
-  const max = sorted[0][1];
-  const outletColor = {
-    Axios:'#e07a7a', Bloomberg:'var(--accent2)', NYT:'#c8c8be',
-    Reuters:'#ffaa55', WSJ:'var(--accent)', Semafor:'#b090e0', FT:'#ffc364'
-  };
-
-  const repOutlet = {};
-  REPORTERS.forEach(r => repOutlet[r.name] = r.outlet);
-
-  el.innerHTML = sorted.map(([name, count]) => {
-    const outlet = repOutlet[name] || 'WSJ';
-    const color = outletColor[outlet] || 'var(--accent)';
-    return `<div class="reporter-activity-row">
-      <div class="reporter-activity-name">${name}</div>
-      <div class="reporter-activity-bar-wrap">
-        <div class="reporter-activity-bar-fill" style="width:${(count/max*100).toFixed(1)}%;background:${color}"></div>
-      </div>
-      <div class="reporter-activity-count">${count}</div>
-    </div>`;
-  }).join('');
-}
-
-function buildActivityTimeline() {
-  const el = document.getElementById('activity-timeline');
-  if (!el || !allArticles.length) return;
-
-  const days = [];
-  const now = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    days.push({
-      label: i === 0 ? 'Today' : d.toLocaleDateString('en-US',{weekday:'short'}),
-      date: d.toDateString(),
-      count: 0,
-      isToday: i === 0
-    });
-  }
-
-  allArticles.forEach(a => {
-    if (!a.pubDate) return;
-    const d = new Date(a.pubDate);
-    if (isNaN(d)) return;
-    const ds = d.toDateString();
-    const bucket = days.find(b => b.date === ds);
-    if (bucket) bucket.count++;
-  });
-
-  const max = Math.max(...days.map(d => d.count), 1);
-
-  el.innerHTML = `
-    <div class="activity-chart">
-      <div class="activity-bars">
-        ${days.map(d => `
-          <div class="activity-bar-col">
-            <div style="flex:1;display:flex;align-items:flex-end;width:100%">
-              <div class="activity-bar${d.isToday?' today':''}"
-                style="height:${Math.max((d.count/max*90),d.count>0?4:2)}px"
-                title="${d.count} article${d.count!==1?'s':''}"></div>
-            </div>
-            <div class="activity-day">${d.label}</div>
-            <div class="activity-day" style="color:var(--accent2)">${d.count||'—'}</div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-}
-
-function buildThemes() {
-  buildWordCloud();
-  buildSectorBars();
-  buildReporterActivity();
-  buildActivityTimeline();
-}
-
-// ── TAB SWITCHING ───────────────────────────────────────────────
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'themes') buildThemes();
-}
-
-// ── DEAL DESK NOTES (Firebase) ──────────────────────────────────
-function noteTimeAgo(ts) {
-  const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60)    return 'just now';
-  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-  const d = new Date(ts);
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
-         d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-}
-
-function renderNotes(notes) {
-  const container = document.getElementById('dealdesk-notes');
-  if (!container) return;
-  if (!notes || !Object.keys(notes).length) {
-    container.innerHTML = '<div class="dealdesk-empty">No notes yet — be the first to add a thought.</div>';
-    return;
-  }
-  const arr = Object.entries(notes)
-    .map(([id, n]) => ({...n, id}))
-    .sort((a, b) => b.ts - a.ts);
-  container.innerHTML = arr.map(n => `
-    <div class="dealdesk-note">
-      <div class="note-author">${escHtml(n.author||'Anonymous')}</div>
-      <div class="note-body">${escHtml(n.text)}</div>
-      <div class="note-meta">
-        <span class="note-time">${noteTimeAgo(n.ts)}</span>
-        <button class="note-delete" data-note-id="${escHtml(n.id)}" title="Delete">✕</button>
-      </div>
-    </div>`).join('');
-}
-
-// Event delegation for note delete buttons
-document.addEventListener('click', function(e) {
-  const btn = e.target.closest('.note-delete[data-note-id]');
-  if (btn) {
-    deleteNote(btn.dataset.noteId);
-  }
-});
-
-function initFirebase() {
-  // Guard against double initialization
-  if (window._firebaseInitialized) return;
-  window._firebaseInitialized = true;
-
-  try {
-    const firebaseConfig = {
-      apiKey: "AIzaSyBhuIrxGsQkIdpIgjmAX9QEJaFgAU06_08",
-      authDomain: "ma-news-tracker.firebaseapp.com",
-      databaseURL: "https://ma-news-tracker-default-rtdb.firebaseio.com",
-      projectId: "ma-news-tracker",
-      storageBucket: "ma-news-tracker.firebasestorage.app",
-      messagingSenderId: "111740960054",
-      appId: "1:111740960054:web:578179c2f6f6242a0a8797"
-    };
-    firebase.initializeApp(firebaseConfig);
-    window.db = firebase.database();
-
-    // Live listener
-    window.db.ref('notes').on('value', snap => {
-      renderNotes(snap.val());
-    });
-  } catch(e) {
-    console.error('Firebase init failed:', e);
+// Fetch reporter (hybrid: RSS first, cache fallback, auto-embed on total failure)
+async function fetchReporter(reporter){
+  const id=`card-${reporter.name.replace(/\s+/g,'-')}`,card=document.getElementById(id);if(!card)return;
+  const body=card.querySelector('[data-view="rss"]'),footer=card.querySelector('.card-footer');
+  body.innerHTML='<div class="state-msg loading">Fetching</div>';
+  let articles=[],source='live';
+  for(const q of reporter.queries){articles=await tryFetch(q);if(articles.length)break;}
+  if(!articles.length){const cached=loadCacheFor(reporter.name);if(cached){articles=cached.a;source='cached';}}
+  if(articles.length){
+    renderArticles(body,articles,reporter);
+    articles.forEach(a=>{const n=normalizeTitle(a.title);if(!allArticles.find(x=>normalizeTitle(x.title)===n))allArticles.push({...a,reporter:reporter.name,outlet:reporter.outlet});});
+    feedsActive++;reporterState[reporter.name].loaded=true;updateLatestStrip();updateStatus();
+    const badge=source==='live'?'<span class="source-badge source-live">live</span>':'<span class="source-badge source-cached">cached</span>';
+    footer.innerHTML=`<span>${articles.length} articles</span>${badge}`;applyFilters();
+  }else{
+    feedsFailed++;body.innerHTML='<div class="state-msg" style="color:var(--text-dim)">RSS unavailable. Showing search.</div>';
+    toggleMode(reporter.name,'embed');footer.innerHTML='<span></span><span class="source-badge source-embed">search</span>';updateStatus();
   }
 }
 
-async function postNote() {
-  if (!window.db) { alert('Deal Desk is still connecting. Try again in a moment.'); return; }
-  const authorEl = document.getElementById('note-author');
-  const textEl   = document.getElementById('note-text');
-  const author = authorEl.value.trim() || 'Anonymous';
-  const text   = textEl.value.trim();
-  if (!text) { textEl.focus(); return; }
-
-  try {
-    await window.db.ref('notes').push({
-      author, text, ts: Date.now()
-    });
-    textEl.value = '';
-    try { localStorage.setItem('dealdesk-author', author); } catch(e) {}
-  } catch(e) {
-    alert('Could not save note — check your connection.');
-  }
+let totalDone=0,totalTarget=0;
+async function fetchAllReporters(){
+  totalDone=0;totalTarget=REPORTERS.length;const queue=[...REPORTERS];
+  async function worker(){while(queue.length){await fetchReporter(queue.shift());totalDone++;if(queue.length)await delay(400);}}
+  const w=[];for(let i=0;i<Math.min(3,REPORTERS.length);i++)w.push(worker());await Promise.all(w);
+  const failed=REPORTERS.filter(r=>!reporterState[r.name].loaded);
+  if(failed.length>0&&failed.length<REPORTERS.length){await delay(2000);for(const r of failed){await fetchReporter(r);await delay(600);}}
+  if(allArticles.length)saveCache();updateLatestStrip();updateStatus();
 }
 
-async function deleteNote(id) {
-  if (!window.db || !id) return;
-  try {
-    await window.db.ref('notes/' + id).remove();
-  } catch(e) {}
+// AI Briefing
+async function generateBriefing(){
+  const el=document.getElementById('briefing-text'),te=document.getElementById('briefing-time');
+  let w=0;while(totalDone<totalTarget&&w<30000){await delay(500);w+=500;}
+  if(!allArticles.length){el.textContent='No headlines loaded. Hit Refresh.';el.classList.remove('loading');return;}
+  const headlines=allArticles.filter(a=>a.title).sort((a,b)=>new Date(b.pubDate||0)-new Date(a.pubDate||0)).slice(0,25).map(a=>`- ${a.title} (${a.reporter}, ${a.outlet})`).join('\n');
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`You are a senior M&A intelligence analyst. Write a 3-4 sentence briefing on the most significant stories below. Name companies, deals, people. No filler. Bloomberg Intelligence style.\n\nHeadlines:\n${headlines}\n\nBriefing only.`}]})});
+    const data=await res.json();const text=data.content?.[0]?.text;if(text){el.textContent=text;el.classList.remove('loading');te.textContent='AI '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return;}}catch(e){}
+  el.textContent=allArticles.slice(0,3).map(a=>a.title).join(' / ');el.classList.remove('loading');te.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
 
-function noteKeydown(e) {
-  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); postNote(); }
+// Countdown
+function startCountdown(){countdownSecs=REFRESH_MS/1000;document.getElementById('progress').style.width='100%';clearInterval(countdownTimer);countdownTimer=setInterval(()=>{countdownSecs--;const m=Math.floor(countdownSecs/60),s=countdownSecs%60;document.getElementById('countdown').textContent=`${m}:${String(s).padStart(2,'0')}`;document.getElementById('progress').style.width=((countdownSecs/(REFRESH_MS/1000))*100)+'%';if(countdownSecs<=0)refreshAll();},1000);}
+
+// Refresh
+function refreshAll(){
+  if(refreshInProgress)return;refreshInProgress=true;allArticles=[];feedsActive=0;feedsFailed=0;
+  clearInterval(countdownTimer);clearInterval(autoTimer);
+  REPORTERS.forEach(r=>{reporterState[r.name]={mode:'rss',loaded:false};});
+  document.getElementById('stat-time').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('briefing-text').textContent='Scanning headlines…';document.getElementById('briefing-text').classList.add('loading');document.getElementById('briefing-time').textContent='';
+  document.getElementById('stat-stories').textContent='...';document.getElementById('stat-feeds').textContent='...';
+  document.getElementById('latest-strip').innerHTML=[1,2,3,4,5].map(()=>'<div class="latest-card"><div class="state-msg loading">Loading</div></div>').join('');
+  document.querySelectorAll('.reporter-card').forEach(c=>{const rss=c.querySelector('[data-view="rss"]'),emb=c.querySelector('[data-view="embed"]');if(rss)rss.style.display='';if(emb){emb.style.display='none';emb.innerHTML='';delete emb.dataset.loaded;}c.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='rss'));});
+  fetchAllReporters().finally(()=>{refreshInProgress=false;});generateBriefing();startCountdown();autoTimer=setInterval(refreshAll,REFRESH_MS);
 }
 
-// ── INIT ─────────────────────────────────────────────────────────
-buildGrid();
-refreshAll();
+// Themes
+const STOP=new Set('the a an and or but in on at to for of with by from as is was are were be been has have had its it this that these those will would could should may might can do does did not no nor so yet both either each few more most other some such than then too very just about after before between into through during over under again further once says said say new report plans plan sources source deal deals company firms firm inc corp co ltd llc group holdings us uk amid per top big set hit get put how why when what who which their they them his her our your my we he she i you up out off all any also now use used take make made two one three four five six seven eight nine ten first second third last next long high low large small'.split(' '));
+const SECTORS={'Healthcare':['pharma','drug','biotech','health','medical','hospital','FDA','clinical','oncology'],'Technology':['tech','software','AI','cloud','data','digital','cyber','semiconductor','chip','SaaS','fintech'],'Energy':['energy','oil','gas','power','renewable','solar','wind','utility','pipeline','LNG'],'Financial Services':['bank','insurance','asset management','wealth','credit','lending','payments','financial'],'Media & Telecom':['media','telecom','streaming','broadcast','cable','wireless','content','entertainment'],'Industrials':['aerospace','defense','manufacturing','logistics','transport','infrastructure'],'Consumer / Retail':['retail','consumer','brand','restaurant','food','beverage','apparel','e-commerce'],'Real Estate':['real estate','REIT','property','commercial','residential','housing']};
 
-// Restore author name
-try {
-  const saved = localStorage.getItem('dealdesk-author');
-  if (saved) document.getElementById('note-author').value = saved;
-} catch(e) {}
+function buildThemes(){
+  if(!allArticles.length)return;
+  const freq={};allArticles.forEach(a=>{(a.title||'').toLowerCase().replace(/[^a-z\s'-]/g,' ').split(/\s+/).filter(w=>w.length>3&&!STOP.has(w)).forEach(w=>{freq[w]=(freq[w]||0)+1;});});
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,50);
+  if(sorted.length){const mx=sorted[0][1],mn=sorted[sorted.length-1][1];const dw=new Set(['acquisition','merger','takeover','buyout','bid','offer','acquire','acquired','acquires','transaction','purchase','divest','spinoff','ipo']),aw=new Set(['activist','proxy','stake','shareholder','campaign','dissident','board','pressure','vote','engagement','hedge']);
+    document.getElementById('word-cloud').innerHTML=sorted.map(([w,c])=>{const r=mn===mx?0.5:(c-mn)/(mx-mn),sz=Math.round(11+r*26),op=0.5+r*0.5;let col=r>0.7?'var(--accent)':r>0.4?'var(--text)':'var(--text-dim)';if(dw.has(w))col='var(--accent2)';if(aw.has(w))col='var(--activism-color)';return`<span class="cloud-word" style="font-size:${sz}px;color:${col};opacity:${op}" title="${c}">${w}</span>`;}).join('');}
+  const sc={};Object.keys(SECTORS).forEach(s=>sc[s]=0);allArticles.forEach(a=>{const t=(a.title||'').toLowerCase();Object.entries(SECTORS).forEach(([s,kw])=>{if(kw.some(k=>t.includes(k.toLowerCase())))sc[s]++;});});
+  const ss=Object.entries(sc).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]);const sEl=document.getElementById('sector-bars');
+  if(ss.length){const mx=ss[0][1];const cols=['var(--accent)','var(--accent2)','#5ab87e','#b090e0','#ffaa55','#e07a7a'];sEl.innerHTML=ss.map(([s,c],i)=>`<div class="sector-bar-row"><div class="sector-name">${s}</div><div class="sector-bar-wrap"><div class="sector-bar-fill" style="width:${(c/mx*100).toFixed(1)}%;background:${cols[i%cols.length]}"></div></div><div class="sector-count">${c}</div></div>`).join('');}else{sEl.innerHTML='<div class="themes-empty">Not enough data.</div>';}
+  const rc={};allArticles.forEach(a=>{if(a.reporter)rc[a.reporter]=(rc[a.reporter]||0)+1;});const rs=Object.entries(rc).sort((a,b)=>b[1]-a[1]);const rEl=document.getElementById('reporter-activity');
+  if(rs.length){const mx=rs[0][1];const oc2={Axios:'#e07a7a',Bloomberg:'var(--accent2)',NYT:'#c8c8be',Reuters:'#ffaa55',WSJ:'var(--accent)',Semafor:'#b090e0',FT:'#ffc364'};const ro={};REPORTERS.forEach(r=>ro[r.name]=r.outlet);
+    rEl.innerHTML=rs.map(([n,c])=>`<div class="reporter-activity-row"><div class="reporter-activity-name">${n}</div><div class="reporter-activity-bar-wrap"><div class="reporter-activity-bar-fill" style="width:${(c/mx*100).toFixed(1)}%;background:${oc2[ro[n]]||'var(--accent)'}"></div></div><div class="reporter-activity-count">${c}</div></div>`).join('');}
+  const tEl=document.getElementById('activity-timeline');const days=[];const now=new Date();for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push({label:i===0?'Today':d.toLocaleDateString('en-US',{weekday:'short'}),date:d.toDateString(),count:0,isToday:i===0});}
+  allArticles.forEach(a=>{if(!a.pubDate)return;const d=new Date(a.pubDate);if(isNaN(d))return;const b=days.find(x=>x.date===d.toDateString());if(b)b.count++;});const mx2=Math.max(...days.map(d=>d.count),1);
+  tEl.innerHTML=`<div class="activity-bars">${days.map(d=>`<div class="activity-bar-col"><div style="flex:1;display:flex;align-items:flex-end;width:100%"><div class="activity-bar${d.isToday?' today':''}" style="height:${Math.max((d.count/mx2*80),d.count>0?3:1)}px"></div></div><div class="activity-day">${d.label}</div><div class="activity-day" style="color:var(--accent2)">${d.count||'-'}</div></div>`).join('')}</div>`;
+}
+function switchTab(tab,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+tab).classList.add('active');if(tab==='themes')buildThemes();}
 
-// ▼▼▼ FIX: Firebase SDKs are already loaded above, so init immediately ▼▼▼
+// Deal Desk
+function noteTimeAgo(ts){const d=Math.floor((Date.now()-ts)/1000);if(d<60)return'just now';if(d<3600)return`${Math.floor(d/60)}m ago`;if(d<86400)return`${Math.floor(d/3600)}h ago`;return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function renderNotes(notes){const c=document.getElementById('dealdesk-notes');if(!c)return;if(!notes||!Object.keys(notes).length){c.innerHTML='<div class="dealdesk-empty">No notes yet.</div>';return;}c.innerHTML=Object.entries(notes).map(([id,n])=>({...n,id})).sort((a,b)=>b.ts-a.ts).map(n=>`<div class="dealdesk-note"><div class="note-author">${escHtml(n.author||'Anon')}</div><div class="note-body">${escHtml(n.text)}</div><div class="note-meta"><span class="note-time">${noteTimeAgo(n.ts)}</span><button class="note-delete" data-id="${escHtml(n.id)}">✕</button></div></div>`).join('');}
+function initFirebase(){if(window._fb)return;window._fb=1;try{firebase.initializeApp({apiKey:"AIzaSyBhuIrxGsQkIdpIgjmAX9QEJaFgAU06_08",authDomain:"ma-news-tracker.firebaseapp.com",databaseURL:"https://ma-news-tracker-default-rtdb.firebaseio.com",projectId:"ma-news-tracker",storageBucket:"ma-news-tracker.firebasestorage.app",messagingSenderId:"111740960054",appId:"1:111740960054:web:578179c2f6f6242a0a8797"});window.db=firebase.database();window.db.ref('notes').on('value',s=>renderNotes(s.val()));}catch(e){}}
+async function postNote(){if(!window.db)return;const a=document.getElementById('note-author'),t=document.getElementById('note-text');const au=a.value.trim()||'Anon',tx=t.value.trim();if(!tx){t.focus();return;}try{await window.db.ref('notes').push({author:au,text:tx,ts:Date.now()});t.value='';try{localStorage.setItem('dd-author',au);}catch(e){}}catch(e){alert('Save failed.');}}
+async function deleteNote(id){if(!window.db||!id)return;try{await window.db.ref('notes/'+id).remove();}catch(e){}}
+function noteKeydown(e){if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();postNote();}}
+
+// Init
+buildGrid();updateLatestStrip();refreshAll();
+try{const s=localStorage.getItem('dd-author');if(s)document.getElementById('note-author').value=s;}catch(e){}
 initFirebase();
 </script>
 </body>

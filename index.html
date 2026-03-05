@@ -647,33 +647,33 @@ header {
 // ── REPORTERS ────────────────────────────────────────────────────
 const REPORTERS = [
   { name:"Dan Primack",         outlet:"Axios",     badge:"badge-axios",     beat:"VC · PE · M&A · Pro Rata",
-    queries:['"Dan Primack" Axios','"Dan Primack" dealmaking','"Pro Rata" Primack'] },
+    queries:['Dan Primack Axios','Dan Primack deal','Pro Rata Primack','"Dan Primack"'] },
   { name:"Michelle Davis",      outlet:"Bloomberg", badge:"badge-bloomberg", beat:"M&A · Deals",
-    queries:['"Michelle Davis" Bloomberg M&A','"Michelle F. Davis" Bloomberg','"Michelle Davis" merger acquisition'] },
+    queries:['Michelle Davis Bloomberg M&A','Michelle Davis Bloomberg deal','Michelle Davis merger','"Michelle Davis" Bloomberg'] },
   { name:"Liana Baker",         outlet:"Bloomberg", badge:"badge-bloomberg", beat:"M&A · Deals",
-    queries:['"Liana Baker" Bloomberg','"Liana Baker" merger acquisition','"Liana Baker" deals'] },
+    queries:['Liana Baker Bloomberg','Liana Baker merger','Liana Baker deal','"Liana Baker"'] },
   { name:"Scott Deveau",        outlet:"Bloomberg", badge:"badge-bloomberg", beat:"M&A · Deals",
-    queries:['"Scott Deveau" Bloomberg','"Scott Deveau" merger acquisition','"Scott Deveau" deals'] },
+    queries:['Scott Deveau Bloomberg','Scott Deveau merger','Scott Deveau deal','"Scott Deveau"'] },
   { name:"Lauren Hirsch",       outlet:"NYT",       badge:"badge-nyt",       beat:"M&A · Corporate · DealBook",
-    queries:['"Lauren Hirsch" "New York Times"','"Lauren Hirsch" DealBook','"Lauren Hirsch" merger'] },
+    queries:['Lauren Hirsch DealBook','Lauren Hirsch New York Times','Lauren Hirsch merger','"Lauren Hirsch"'] },
   { name:"Sabrina Valle",       outlet:"Reuters",   badge:"badge-reuters",   beat:"M&A Correspondent",
-    queries:['"Sabrina Valle" Reuters','"Sabrina Valle" merger acquisition','"Sabrina Valle" M&A'] },
+    queries:['Sabrina Valle Reuters','Sabrina Valle merger','Sabrina Valle M&A','"Sabrina Valle"'] },
   { name:"David French",        outlet:"Reuters",   badge:"badge-reuters",   beat:"M&A · Deals",
-    queries:['"David French" Reuters deals','"David French" Reuters merger','"David French" Reuters M&A'] },
+    queries:['David French Reuters deal','David French Reuters merger','David French M&A','"David French" Reuters'] },
   { name:"Abigail Summerville", outlet:"Reuters",   badge:"badge-reuters",   beat:"M&A · Deals",
-    queries:['"Abigail Summerville" Reuters','"Abigail Summerville" merger','"Abigail Summerville" deals'] },
+    queries:['Abigail Summerville Reuters','Abigail Summerville merger','Abigail Summerville deal','"Abigail Summerville"'] },
   { name:"Lauren Thomas",       outlet:"WSJ",       badge:"badge-wsj",       beat:"M&A · Wall Street",
-    queries:['"Lauren Thomas" "Wall Street Journal"','"Lauren Thomas" WSJ merger','"Lauren Thomas" deals'] },
+    queries:['Lauren Thomas Wall Street Journal','Lauren Thomas WSJ merger','Lauren Thomas deal','"Lauren Thomas" WSJ'] },
   { name:"Cara Lombardo",       outlet:"WSJ",       badge:"badge-wsj",       beat:"M&A · Deals · Activism",
-    queries:['"Cara Lombardo" "Wall Street Journal"','"Cara Lombardo" merger acquisition','"Cara Lombardo" deals'] },
+    queries:['Cara Lombardo Wall Street Journal','Cara Lombardo merger','Cara Lombardo deal','"Cara Lombardo"'] },
   { name:"Ben Glickman",        outlet:"WSJ",       badge:"badge-wsj",       beat:"M&A · Deals",
-    queries:['"Ben Glickman" "Wall Street Journal"','"Ben Glickman" WSJ','"Ben Glickman" merger deals'] },
+    queries:['Ben Glickman Wall Street Journal','Ben Glickman WSJ deal','Ben Glickman merger','"Ben Glickman"'] },
   { name:"Liz Hoffman",         outlet:"Semafor",   badge:"badge-semafor",   beat:"Finance · M&A · Semafor Business",
-    queries:['"Liz Hoffman" Semafor','"Liz Hoffman" finance deals','"Liz Hoffman" merger'] },
+    queries:['Liz Hoffman Semafor','Liz Hoffman finance deal','Liz Hoffman merger','"Liz Hoffman"'] },
   { name:"Antoine Gara",        outlet:"FT",        badge:"badge-ft",        beat:"Wall Street · PE · Deals",
-    queries:['"Antoine Gara" "Financial Times"','"Antoine Gara" FT deals','"Antoine Gara" private equity merger'] },
+    queries:['Antoine Gara Financial Times','Antoine Gara FT deal','Antoine Gara private equity','"Antoine Gara"'] },
   { name:"Sujeet Indap",        outlet:"FT",        badge:"badge-ft",        beat:"Activism · Corporate Finance",
-    queries:['"Sujeet Indap" "Financial Times"','"Sujeet Indap" activism','"Sujeet Indap" FT deals'] },
+    queries:['Sujeet Indap Financial Times','Sujeet Indap activism','Sujeet Indap deal','"Sujeet Indap"'] },
 ];
 
 // ── KEYWORD CLASSIFIERS ──────────────────────────────────────────
@@ -705,6 +705,24 @@ const OUTLET_COLORS = {
 };
 
 // ── UTILS ────────────────────────────────────────────────────────
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function escJs(s) {
+  return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n').replace(/\r/g,'');
+}
+
+function safeUrl(url) {
+  if (!url) return '#';
+  try {
+    const u = new URL(url);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? url : '#';
+  } catch(e) {
+    return '#';
+  }
+}
+
 function rssUrl(q) {
   return `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
 }
@@ -733,37 +751,47 @@ function fullTimestamp(str) {
 }
 
 function parseRSS(xml) {
-  const doc = new DOMParser().parseFromString(xml,'text/xml');
-  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-  const cutoff = Date.now() - SEVEN_DAYS;
-  return Array.from(doc.querySelectorAll('item'))
-    .map(item => ({
-      title:   item.querySelector('title')?.textContent?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
-      link:    item.querySelector('link')?.textContent || '#',
-      pubDate: item.querySelector('pubDate')?.textContent || '',
-      source:  item.querySelector('source')?.textContent || ''
-    }))
-    .filter(a => {
-      if (!a.pubDate) return true;
-      const d = new Date(a.pubDate);
-      return isNaN(d) || d.getTime() > cutoff;
-    })
-    .sort((a, b) => {
-      const da = a.pubDate ? new Date(a.pubDate) : new Date(0);
-      const db = b.pubDate ? new Date(b.pubDate) : new Date(0);
-      return db - da;
-    })
-    .slice(0, 6);
+  try {
+    const doc = new DOMParser().parseFromString(xml,'text/xml');
+    // Check for XML parse errors
+    if (doc.querySelector('parsererror')) return [];
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - SEVEN_DAYS;
+    return Array.from(doc.querySelectorAll('item'))
+      .map(item => ({
+        title:   item.querySelector('title')?.textContent?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
+        link:    item.querySelector('link')?.textContent || '#',
+        pubDate: item.querySelector('pubDate')?.textContent || '',
+        source:  item.querySelector('source')?.textContent || ''
+      }))
+      .filter(a => {
+        if (!a.title) return false; // skip empty titles
+        if (!a.pubDate) return true;
+        const d = new Date(a.pubDate);
+        return isNaN(d) || d.getTime() > cutoff;
+      })
+      .sort((a, b) => {
+        const da = a.pubDate ? new Date(a.pubDate) : new Date(0);
+        const db = b.pubDate ? new Date(b.pubDate) : new Date(0);
+        return db - da;
+      })
+      .slice(0, 6);
+  } catch(e) {
+    return [];
+  }
 }
 
 // Fetch with timeout helper
-function fetchWithTimeout(url, timeoutMs = 8000) {
+function fetchWithTimeout(url, timeoutMs = 10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   return fetch(url, { signal: controller.signal })
     .then(r => { clearTimeout(timer); return r; })
     .catch(e => { clearTimeout(timer); throw e; });
 }
+
+// Small delay helper to avoid hammering proxies
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // Track which proxy is working best (start with first)
 let preferredProxyIndex = 0;
@@ -813,8 +841,16 @@ async function tryFetch(query) {
       }
     },
     {
-      name: 'corsanywhere',
+      name: 'codetabs',
       fetchUrl: `https://api.codetabs.com/v1/proxy?quest=${enc}`,
+      parse: async (r) => {
+        const text = await r.text();
+        return parseRSS(text);
+      }
+    },
+    {
+      name: 'allorigins-raw',
+      fetchUrl: `https://api.allorigins.win/raw?url=${enc}`,
       parse: async (r) => {
         const text = await r.text();
         return parseRSS(text);
@@ -831,8 +867,8 @@ async function tryFetch(query) {
   for (let i = 0; i < order.length; i++) {
     const proxy = order[i];
     try {
-      const r = await fetchWithTimeout(proxy.fetchUrl, 8000);
-      if (!r.ok) continue;
+      const r = await fetchWithTimeout(proxy.fetchUrl, 10000);
+      if (!r.ok) { await delay(300); continue; }
       const articles = await proxy.parse(r);
       if (articles.length) {
         // Remember this proxy worked
@@ -841,8 +877,9 @@ async function tryFetch(query) {
       }
     } catch(e) {
       // Timeout or network error, try next proxy
-      continue;
     }
+    // Brief pause before trying next proxy to avoid rate limits
+    if (i < order.length - 1) await delay(300);
   }
   return [];
 }
@@ -930,34 +967,52 @@ function sendArticle(title, link, reporter, outlet) {
 
 // ── RENDER ARTICLES ──────────────────────────────────────────────
 function renderArticles(body, articles, reporter) {
-  body.innerHTML = articles.map(a => {
+  body.innerHTML = articles.map((a, idx) => {
     const tags = tagArticle(a.title);
     const tagHtml = [
       tags.isDeal     ? '<span class="tag-deal">Deal</span>' : '',
       tags.isActivism ? '<span class="tag-activism">Activism</span>' : ''
     ].join('');
-    const titleEsc = (a.title||'').replace(/"/g,'&quot;');
-    const linkEsc  = (a.link||'#').replace(/"/g,'&quot;');
-    const repEsc   = (reporter.name||'').replace(/"/g,'&quot;');
-    const outEsc   = (reporter.outlet||'').replace(/"/g,'&quot;');
+    const safeLink = safeUrl(a.link);
+    const titleHtml = escHtml(a.title);
+    const titleLower = escHtml((a.title||'').toLowerCase());
     return `<div class="article-item"
-        data-title="${titleEsc.toLowerCase()}"
+        data-title="${titleLower}"
         data-deal="${tags.isDeal}"
-        data-activism="${tags.isActivism}">
+        data-activism="${tags.isActivism}"
+        data-idx="${idx}">
       <div class="article-row">
         <div class="article-title">
-          <a href="${linkEsc}" target="_blank" rel="noopener">${a.title}</a>
+          <a href="${escHtml(safeLink)}" target="_blank" rel="noopener">${titleHtml}</a>
         </div>
-        <button class="send-btn" onclick="sendArticle('${titleEsc}','${linkEsc}','${repEsc}','${outEsc}')" title="Email this article">✉</button>
+        <button class="send-btn"
+          data-send-title="${escHtml(a.title)}"
+          data-send-link="${escHtml(safeLink)}"
+          data-send-reporter="${escHtml(reporter.name)}"
+          data-send-outlet="${escHtml(reporter.outlet)}"
+          title="Email this article">✉</button>
       </div>
       <div class="article-meta">
-        ${a.pubDate ? `<span class="article-time" title="${fullTimestamp(a.pubDate)}">${formatTime(a.pubDate)}</span>` : ''}
-        ${a.source  ? `<span class="article-source">${a.source}</span>` : ''}
+        ${a.pubDate ? `<span class="article-time" title="${escHtml(fullTimestamp(a.pubDate))}">${formatTime(a.pubDate)}</span>` : ''}
+        ${a.source  ? `<span class="article-source">${escHtml(a.source)}</span>` : ''}
         ${tagHtml}
       </div>
     </div>`;
   }).join('') + `<div class="no-articles-msg state-msg" style="display:none">No matching articles.</div>`;
 }
+
+// Event delegation for send buttons (avoids inline onclick XSS issues)
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.send-btn[data-send-title]');
+  if (btn) {
+    sendArticle(
+      btn.dataset.sendTitle,
+      btn.dataset.sendLink,
+      btn.dataset.sendReporter,
+      btn.dataset.sendOutlet
+    );
+  }
+});
 
 // ── LATEST STRIP ─────────────────────────────────────────────────
 function updateLatestStrip() {
@@ -968,13 +1023,14 @@ function updateLatestStrip() {
   if (!top5.length) return;
   document.getElementById('latest-strip').innerHTML = top5.map(a=>{
     const c = OUTLET_COLORS[a.outlet]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
+    const safeLink = safeUrl(a.link);
     return `<div class="latest-card">
-      <a href="${a.link}" target="_blank" rel="noopener">
-        <div class="latest-badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.color}33">${a.outlet}</div>
-        <div class="latest-title">${a.title}</div>
+      <a href="${escHtml(safeLink)}" target="_blank" rel="noopener">
+        <div class="latest-badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.color}33">${escHtml(a.outlet)}</div>
+        <div class="latest-title">${escHtml(a.title)}</div>
         <div class="latest-meta">
-          <span class="latest-reporter">${a.reporter}</span>
-          <span class="latest-time" title="${fullTimestamp(a.pubDate)}">${formatTime(a.pubDate)}</span>
+          <span class="latest-reporter">${escHtml(a.reporter)}</span>
+          <span class="latest-time" title="${escHtml(fullTimestamp(a.pubDate))}">${formatTime(a.pubDate)}</span>
         </div>
       </a>
     </div>`;
@@ -993,9 +1049,9 @@ async function generateBriefing() {
   const el = document.getElementById('briefing-text');
   const timeEl = document.getElementById('briefing-time');
 
-  // Wait for feeds to load (check every 500ms, max 20s)
+  // Wait for feeds to load (check every 500ms, max 45s to allow for retries)
   let waited = 0;
-  while (totalReportersDone < totalReportersToFetch && waited < 20000) {
+  while (totalReportersDone < totalReportersToFetch && waited < 45000) {
     await new Promise(r => setTimeout(r, 500));
     waited += 500;
   }
@@ -1032,9 +1088,15 @@ async function generateBriefing() {
   timeEl.textContent = 'Auto-summary · ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
 
+// Normalize title for dedup: lowercase, collapse whitespace, strip punctuation
+function normalizeTitle(t) {
+  return (t||'').toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+}
+
 // ── FETCH REPORTER ───────────────────────────────────────────────
 let totalReportersDone = 0;
 let totalReportersToFetch = 0;
+let isRetryPhase = false;
 
 async function fetchReporter(reporter) {
   const id = `card-${reporter.name.replace(/\s+/g,'-')}`;
@@ -1053,7 +1115,8 @@ async function fetchReporter(reporter) {
   if (articles.length) {
     renderArticles(body, articles, reporter);
     articles.forEach(a => {
-      if (!allArticles.find(x=>x.title===a.title))
+      const norm = normalizeTitle(a.title);
+      if (!allArticles.find(x => normalizeTitle(x.title) === norm))
         allArticles.push({...a, reporter:reporter.name, outlet:reporter.outlet});
     });
     feedsActive++;
@@ -1066,16 +1129,18 @@ async function fetchReporter(reporter) {
     body.innerHTML = `<div class="state-msg error">Feed unavailable — <a class="google-link" href="https://news.google.com/search?q=${encodeURIComponent(reporter.queries[0])}" target="_blank">search Google News ↗</a></div>`;
   }
 
-  // When all reporters are done, finalize the latest strip
-  if (totalReportersDone >= totalReportersToFetch) {
-    finalizeLatestStrip();
+  // Only finalize after retries are complete (not during first pass)
+  if (!isRetryPhase && totalReportersDone >= totalReportersToFetch) {
+    // Don't finalize yet, retries may happen
   }
 }
 
-// Concurrency-limited parallel fetch (3 at a time to avoid overwhelming proxies)
+// Concurrency-limited parallel fetch with stagger + retry for failures
 async function fetchAllReporters(reporters) {
   totalReportersDone = 0;
   totalReportersToFetch = reporters.length;
+  isRetryPhase = false;
+  const failedReporters = [];
   const queue = [...reporters];
   const CONCURRENCY = 3;
 
@@ -1083,6 +1148,14 @@ async function fetchAllReporters(reporters) {
     while (queue.length) {
       const reporter = queue.shift();
       await fetchReporter(reporter);
+      // Check if it failed (no articles loaded for this reporter)
+      const id = `card-${reporter.name.replace(/\s+/g,'-')}`;
+      const card = document.querySelector(`#${id} .articles-list`);
+      if (card && card.querySelector('.state-msg.error')) {
+        failedReporters.push(reporter);
+      }
+      // Small stagger between reporters to avoid hammering proxies
+      if (queue.length) await delay(500);
     }
   }
 
@@ -1091,6 +1164,21 @@ async function fetchAllReporters(reporters) {
     workers.push(worker());
   }
   await Promise.all(workers);
+
+  // Retry failed reporters once (proxy might have recovered)
+  if (failedReporters.length > 0 && failedReporters.length < reporters.length) {
+    isRetryPhase = true;
+    console.log(`Retrying ${failedReporters.length} failed feeds...`);
+    await delay(2000);
+    for (const reporter of failedReporters) {
+      await fetchReporter(reporter);
+      await delay(800);
+    }
+    isRetryPhase = false;
+  }
+
+  // Now finalize after everything (including retries) is done
+  finalizeLatestStrip();
 }
 
 // Show final state on latest strip if no articles loaded
@@ -1137,8 +1225,17 @@ function startCountdown() {
 }
 
 // ── REFRESH ALL ──────────────────────────────────────────────────
+let refreshInProgress = false;
+
 function refreshAll() {
+  // Prevent stacking refreshes
+  if (refreshInProgress) return;
+  refreshInProgress = true;
+
   allArticles = []; feedsActive = 0;
+  clearInterval(countdownTimer);
+  clearInterval(autoTimer);
+
   const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   document.getElementById('last-updated').textContent = now;
   document.getElementById('stat-time').textContent = now;
@@ -1150,9 +1247,12 @@ function refreshAll() {
   document.getElementById('stat-feeds').textContent = '—';
   document.getElementById('latest-strip').innerHTML = [1,2,3,4,5].map(()=>
     `<div class="latest-card"><div class="state-msg loading">Loading</div></div>`).join('');
-  fetchAllReporters(REPORTERS);
+  fetchAllReporters(REPORTERS).finally(() => {
+    refreshInProgress = false;
+  });
   generateBriefing();
   startCountdown();
+  autoTimer = setInterval(refreshAll, REFRESH_MS);
 }
 
 // ── THEMES ENGINE ───────────────────────────────────────────────
@@ -1372,10 +1472,6 @@ function noteTimeAgo(ts) {
          d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
-function escHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function renderNotes(notes) {
   const container = document.getElementById('dealdesk-notes');
   if (!container) return;
@@ -1392,31 +1488,48 @@ function renderNotes(notes) {
       <div class="note-body">${escHtml(n.text)}</div>
       <div class="note-meta">
         <span class="note-time">${noteTimeAgo(n.ts)}</span>
-        <button class="note-delete" onclick="deleteNote('${n.id}')" title="Delete">✕</button>
+        <button class="note-delete" data-note-id="${escHtml(n.id)}" title="Delete">✕</button>
       </div>
     </div>`).join('');
 }
 
-function initFirebase() {
-  const firebaseConfig = {
-    apiKey: "AIzaSyBhuIrxGsQkIdpIgjmAX9QEJaFgAU06_08",
-    authDomain: "ma-news-tracker.firebaseapp.com",
-    databaseURL: "https://ma-news-tracker-default-rtdb.firebaseio.com",
-    projectId: "ma-news-tracker",
-    storageBucket: "ma-news-tracker.firebasestorage.app",
-    messagingSenderId: "111740960054",
-    appId: "1:111740960054:web:578179c2f6f6242a0a8797"
-  };
-  firebase.initializeApp(firebaseConfig);
-  window.db = firebase.database();
+// Event delegation for note delete buttons
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.note-delete[data-note-id]');
+  if (btn) {
+    deleteNote(btn.dataset.noteId);
+  }
+});
 
-  // Live listener
-  window.db.ref('notes').on('value', snap => {
-    renderNotes(snap.val());
-  });
+function initFirebase() {
+  // Guard against double initialization
+  if (window._firebaseInitialized) return;
+  window._firebaseInitialized = true;
+
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhuIrxGsQkIdpIgjmAX9QEJaFgAU06_08",
+      authDomain: "ma-news-tracker.firebaseapp.com",
+      databaseURL: "https://ma-news-tracker-default-rtdb.firebaseio.com",
+      projectId: "ma-news-tracker",
+      storageBucket: "ma-news-tracker.firebasestorage.app",
+      messagingSenderId: "111740960054",
+      appId: "1:111740960054:web:578179c2f6f6242a0a8797"
+    };
+    firebase.initializeApp(firebaseConfig);
+    window.db = firebase.database();
+
+    // Live listener
+    window.db.ref('notes').on('value', snap => {
+      renderNotes(snap.val());
+    });
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+  }
 }
 
 async function postNote() {
+  if (!window.db) { alert('Deal Desk is still connecting. Try again in a moment.'); return; }
   const authorEl = document.getElementById('note-author');
   const textEl   = document.getElementById('note-text');
   const author = authorEl.value.trim() || 'Anonymous';
@@ -1435,6 +1548,7 @@ async function postNote() {
 }
 
 async function deleteNote(id) {
+  if (!window.db || !id) return;
   try {
     await window.db.ref('notes/' + id).remove();
   } catch(e) {}
@@ -1447,8 +1561,6 @@ function noteKeydown(e) {
 // ── INIT ─────────────────────────────────────────────────────────
 buildGrid();
 refreshAll();
-clearInterval(autoTimer);
-autoTimer = setInterval(refreshAll, REFRESH_MS);
 
 // Restore author name
 try {

@@ -471,8 +471,6 @@ header {
 
 /* RESPONSIVE */
 @media(max-width:900px) { .themes-grid { grid-template-columns: 1fr; } }
-
-/* RESPONSIVE */
 @media(max-width:1300px) { .briefing-wrap{grid-template-columns:1fr} .stats-card{display:none} .latest-strip{grid-template-columns:repeat(3,1fr)} }
 @media(max-width:900px) { header{padding:14px 20px;flex-wrap:wrap;gap:10px} .main{padding:16px 20px 60px} .reporters-grid{grid-template-columns:1fr} .latest-strip{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:520px) { .latest-strip{grid-template-columns:1fr} }
@@ -641,6 +639,10 @@ header {
 
 <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
+<!-- ▼▼▼ FIX: Load Firebase SDKs BEFORE app code ▼▼▼ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
 // ── REPORTERS ────────────────────────────────────────────────────
 const REPORTERS = [
@@ -712,7 +714,6 @@ function formatTime(str) {
   if (isNaN(d)) return '';
   const now = new Date();
   const diff = Math.floor((now - d) / 1000);
-  // Relative for recent, exact for older
   if (diff < 60)    return `${diff}s ago`;
   if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
   if (diff < 86400) {
@@ -720,7 +721,6 @@ function formatTime(str) {
     const m = Math.floor((diff % 3600)/60);
     return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
   }
-  // Exact date + time for older articles
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
          d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
@@ -744,45 +744,106 @@ function parseRSS(xml) {
       source:  item.querySelector('source')?.textContent || ''
     }))
     .filter(a => {
-      if (!a.pubDate) return true; // keep if no date
+      if (!a.pubDate) return true;
       const d = new Date(a.pubDate);
       return isNaN(d) || d.getTime() > cutoff;
     })
     .sort((a, b) => {
       const da = a.pubDate ? new Date(a.pubDate) : new Date(0);
       const db = b.pubDate ? new Date(b.pubDate) : new Date(0);
-      return db - da; // newest first
+      return db - da;
     })
     .slice(0, 6);
 }
 
+// Fetch with timeout helper
+function fetchWithTimeout(url, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal })
+    .then(r => { clearTimeout(timer); return r; })
+    .catch(e => { clearTimeout(timer); throw e; });
+}
+
+// Track which proxy is working best (start with first)
+let preferredProxyIndex = 0;
+
 async function tryFetch(query) {
   const url = rssUrl(query);
-  try {
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-    const d = await r.json();
-    if (d.contents) { const a = parseRSS(d.contents); if (a.length) return a; }
-  } catch(e) {}
-  try {
-    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
-    const d = await r.json();
-    if (d.status==='ok' && d.items?.length) {
-      const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-      const cutoff = Date.now() - SEVEN_DAYS;
-      return d.items
-        .map(i => ({
-          title:   i.title?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
-          link:    i.link || '#', pubDate: i.pubDate || '', source: i.source_id || ''
-        }))
-        .filter(a => {
-          if (!a.pubDate) return true;
-          const d2 = new Date(a.pubDate);
-          return isNaN(d2) || d2.getTime() > cutoff;
-        })
-        .sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0))
-        .slice(0, 6);
+  const enc = encodeURIComponent(url);
+
+  // Proxy configs: each has a fetch URL and a parser
+  const proxies = [
+    {
+      name: 'allorigins',
+      fetchUrl: `https://api.allorigins.win/get?url=${enc}`,
+      parse: async (r) => {
+        const d = await r.json();
+        return d.contents ? parseRSS(d.contents) : [];
+      }
+    },
+    {
+      name: 'rss2json',
+      fetchUrl: `https://api.rss2json.com/v1/api.json?rss_url=${enc}`,
+      parse: async (r) => {
+        const d = await r.json();
+        if (d.status !== 'ok' || !d.items?.length) return [];
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        const cutoff = Date.now() - SEVEN_DAYS;
+        return d.items
+          .map(i => ({
+            title:   i.title?.replace(/ - [A-Z][^-]{2,40}$/, '') || '',
+            link:    i.link || '#', pubDate: i.pubDate || '', source: i.source_id || ''
+          }))
+          .filter(a => {
+            if (!a.pubDate) return true;
+            const d2 = new Date(a.pubDate);
+            return isNaN(d2) || d2.getTime() > cutoff;
+          })
+          .sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0))
+          .slice(0, 6);
+      }
+    },
+    {
+      name: 'corsproxy',
+      fetchUrl: `https://corsproxy.io/?url=${enc}`,
+      parse: async (r) => {
+        const text = await r.text();
+        return parseRSS(text);
+      }
+    },
+    {
+      name: 'corsanywhere',
+      fetchUrl: `https://api.codetabs.com/v1/proxy?quest=${enc}`,
+      parse: async (r) => {
+        const text = await r.text();
+        return parseRSS(text);
+      }
     }
-  } catch(e) {}
+  ];
+
+  // Try preferred proxy first, then cycle through others
+  const order = [];
+  for (let i = 0; i < proxies.length; i++) {
+    order.push(proxies[(preferredProxyIndex + i) % proxies.length]);
+  }
+
+  for (let i = 0; i < order.length; i++) {
+    const proxy = order[i];
+    try {
+      const r = await fetchWithTimeout(proxy.fetchUrl, 8000);
+      if (!r.ok) continue;
+      const articles = await proxy.parse(r);
+      if (articles.length) {
+        // Remember this proxy worked
+        preferredProxyIndex = proxies.indexOf(proxy);
+        return articles;
+      }
+    } catch(e) {
+      // Timeout or network error, try next proxy
+      continue;
+    }
+  }
   return [];
 }
 
@@ -847,12 +908,10 @@ function applyFilters() {
       if (show) { cardVisible++; totalVisible++; }
     });
 
-    // Show/hide no-articles message per card
     const noMsg = card.querySelector('.no-articles-msg');
     if (noMsg) noMsg.style.display = cardVisible === 0 ? 'block' : 'none';
   });
 
-  // Search count
   if (searchTerm) {
     document.getElementById('search-count').textContent = `${totalVisible} result${totalVisible!==1?'s':''}`;
   } else {
@@ -933,7 +992,14 @@ function updateStats() {
 async function generateBriefing() {
   const el = document.getElementById('briefing-text');
   const timeEl = document.getElementById('briefing-time');
-  await new Promise(r=>setTimeout(r,6000));
+
+  // Wait for feeds to load (check every 500ms, max 20s)
+  let waited = 0;
+  while (totalReportersDone < totalReportersToFetch && waited < 20000) {
+    await new Promise(r => setTimeout(r, 500));
+    waited += 500;
+  }
+
   if (!allArticles.length) {
     el.textContent = 'No articles loaded — hit Refresh to try again.';
     el.classList.remove('loading'); return;
@@ -967,6 +1033,9 @@ async function generateBriefing() {
 }
 
 // ── FETCH REPORTER ───────────────────────────────────────────────
+let totalReportersDone = 0;
+let totalReportersToFetch = 0;
+
 async function fetchReporter(reporter) {
   const id = `card-${reporter.name.replace(/\s+/g,'-')}`;
   const body = document.querySelector(`#${id} .articles-list`);
@@ -978,6 +1047,8 @@ async function fetchReporter(reporter) {
     articles = await tryFetch(q);
     if (articles.length) break;
   }
+
+  totalReportersDone++;
 
   if (articles.length) {
     renderArticles(body, articles, reporter);
@@ -993,6 +1064,43 @@ async function fetchReporter(reporter) {
     applyFilters();
   } else {
     body.innerHTML = `<div class="state-msg error">Feed unavailable — <a class="google-link" href="https://news.google.com/search?q=${encodeURIComponent(reporter.queries[0])}" target="_blank">search Google News ↗</a></div>`;
+  }
+
+  // When all reporters are done, finalize the latest strip
+  if (totalReportersDone >= totalReportersToFetch) {
+    finalizeLatestStrip();
+  }
+}
+
+// Concurrency-limited parallel fetch (3 at a time to avoid overwhelming proxies)
+async function fetchAllReporters(reporters) {
+  totalReportersDone = 0;
+  totalReportersToFetch = reporters.length;
+  const queue = [...reporters];
+  const CONCURRENCY = 3;
+
+  async function worker() {
+    while (queue.length) {
+      const reporter = queue.shift();
+      await fetchReporter(reporter);
+    }
+  }
+
+  const workers = [];
+  for (let i = 0; i < Math.min(CONCURRENCY, reporters.length); i++) {
+    workers.push(worker());
+  }
+  await Promise.all(workers);
+}
+
+// Show final state on latest strip if no articles loaded
+function finalizeLatestStrip() {
+  if (allArticles.length === 0) {
+    document.getElementById('latest-strip').innerHTML =
+      `<div style="grid-column:1/-1" class="state-msg error">
+        All RSS feeds timed out or are unavailable. Try refreshing, or
+        <a class="google-link" href="https://news.google.com/search?q=merger+acquisition+deal" target="_blank">browse Google News directly ↗</a>
+      </div>`;
   }
 }
 
@@ -1042,7 +1150,7 @@ function refreshAll() {
   document.getElementById('stat-feeds').textContent = '—';
   document.getElementById('latest-strip').innerHTML = [1,2,3,4,5].map(()=>
     `<div class="latest-card"><div class="state-msg loading">Loading</div></div>`).join('');
-  REPORTERS.forEach(fetchReporter);
+  fetchAllReporters(REPORTERS);
   generateBriefing();
   startCountdown();
 }
@@ -1080,7 +1188,6 @@ const SECTOR_KEYWORDS = {
 function buildWordCloud() {
   if (!allArticles.length) return;
 
-  // Count word frequencies
   const freq = {};
   allArticles.forEach(a => {
     const words = (a.title || '').toLowerCase()
@@ -1090,7 +1197,6 @@ function buildWordCloud() {
     words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
   });
 
-  // Sort by frequency, take top 60
   const sorted = Object.entries(freq)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 60);
@@ -1100,7 +1206,6 @@ function buildWordCloud() {
   const maxFreq = sorted[0][1];
   const minFreq = sorted[sorted.length - 1][1];
 
-  // Color categories
   const dealWords = new Set(['acquisition','merger','takeover','buyout','bid','offer','acquire','acquired','acquires','transaction','purchase','divest','spinoff','ipo','lbo','leverage','private','equity']);
   const activismWords = new Set(['activist','proxy','stake','shareholder','campaign','dissident','board','pressure','letter','vote','engagement','fund','hedge']);
 
@@ -1109,7 +1214,7 @@ function buildWordCloud() {
 
   cloud.innerHTML = sorted.map(([word, count]) => {
     const ratio = minFreq === maxFreq ? 0.5 : (count - minFreq) / (maxFreq - minFreq);
-    const size = Math.round(11 + ratio * 28); // 11px to 39px
+    const size = Math.round(11 + ratio * 28);
     const opacity = 0.5 + ratio * 0.5;
 
     let color;
@@ -1179,7 +1284,6 @@ function buildReporterActivity() {
     Reuters:'#ffaa55', WSJ:'var(--accent)', Semafor:'#b090e0', FT:'#ffc364'
   };
 
-  // Get reporter->outlet map
   const repOutlet = {};
   REPORTERS.forEach(r => repOutlet[r.name] = r.outlet);
 
@@ -1200,7 +1304,6 @@ function buildActivityTimeline() {
   const el = document.getElementById('activity-timeline');
   if (!el || !allArticles.length) return;
 
-  // Build last 7 days buckets
   const days = [];
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -1256,12 +1359,9 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'themes') buildThemes();
-  // Firebase listener keeps notes live automatically
 }
 
 // ── DEAL DESK NOTES (Firebase) ──────────────────────────────────
-// Firebase is loaded via CDN script tags at bottom of body
-
 function noteTimeAgo(ts) {
   const diff = Math.floor((Date.now() - ts) / 1000);
   if (diff < 60)    return 'just now';
@@ -1283,7 +1383,6 @@ function renderNotes(notes) {
     container.innerHTML = '<div class="dealdesk-empty">No notes yet — be the first to add a thought.</div>';
     return;
   }
-  // Convert Firebase object to sorted array (newest first)
   const arr = Object.entries(notes)
     .map(([id, n]) => ({...n, id}))
     .sort((a, b) => b.ts - a.ts);
@@ -1311,7 +1410,7 @@ function initFirebase() {
   firebase.initializeApp(firebaseConfig);
   window.db = firebase.database();
 
-  // Live listener — updates in real time for all users
+  // Live listener
   window.db.ref('notes').on('value', snap => {
     renderNotes(snap.val());
   });
@@ -1357,13 +1456,8 @@ try {
   if (saved) document.getElementById('note-author').value = saved;
 } catch(e) {}
 
-// Firebase handles live note updates via its own listener (initFirebase)
-</script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-  // Init Firebase after SDKs are loaded
-  initFirebase();
+// ▼▼▼ FIX: Firebase SDKs are already loaded above, so init immediately ▼▼▼
+initFirebase();
 </script>
 </body>
 </html>
